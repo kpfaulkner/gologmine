@@ -1,7 +1,6 @@
 package logmine
 
 import (
-	"fmt"
 	"github.com/kpfaulkner/gologmine/pkg/logmine/tokenizers"
 	"strings"
 )
@@ -25,8 +24,8 @@ func NewTokenizer() Tokenizer {
 
 	// list all the specifictokenizers that we're going to use.
 	t.tokenizerCheckers = []tokenizers.TokenizerChecker{tokenizers.NewDateTokenizer() , tokenizers.NewTimeTokenizer(),
-																					 tokenizers.NewIPV4Tokenizer(), tokenizers.NewNotSpaceTokenizer(),
-																					 tokenizers.NewNumberTokenizer(), tokenizers.NewWordTokenizer()}
+																					 tokenizers.NewIPV4Tokenizer(), tokenizers.NewNumberTokenizer(),
+																					 tokenizers.NewWordTokenizer(),tokenizers.NewNotSpaceTokenizer()}
 
 //																					 tokenizers.NewAnyDataTokenizer()}
 	return t
@@ -66,7 +65,7 @@ func (t Tokenizer) Tokenize(log string) ([]tokenizers.DataType,error) {
 
 	dataTypeArray := []tokenizers.DataType{}
 	for _,token := range tokens {
-		fmt.Printf("token: %s\n", token)
+		//fmt.Printf("token: %s\n", token)
 		trimmedToken := strings.TrimSpace(token)
 		dt, err := t.processToken(trimmedToken)
 		if err != nil {

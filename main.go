@@ -14,14 +14,39 @@ func main() {
 
   tokenizer := logmine.NewTokenizer()
 
-  res,err := tokenizer.Tokenize("2017/02/04 09:01:00 login 127.0.0.1 user=bear12")
-	//res,err := tokenizer.Tokenize("bear12")
-
-  if err != nil {
-  	fmt.Printf("error is %s\n", err.Error())
-  	return
-  }
-
+  res,_ := tokenizer.Tokenize("2017/02/04 09:01:00 login 127.0.0.1 user=bear12")
   fmt.Printf("res is %v\n", res)
 
+	res,_ = tokenizer.Tokenize("2017/02/04 09:02:00 DB Connect 127.0.0.1 user=bear12")
+	fmt.Printf("res is %v\n", res)
+
+	res,_ = tokenizer.Tokenize("2017/02/04 09:03:00 DB Disconnect 127.0.0.1 user=bear12")
+	fmt.Printf("res is %v\n", res)
+
+	res,_ = tokenizer.Tokenize("2017/02/04 09:04:00 logout 127.0.0.1 user=bear12")
+	fmt.Printf("res is %v\n", res)
+
+	res,_ = tokenizer.Tokenize("2017/02/04 09:05:00 login 127.0.0.1 user=bear34")
+	fmt.Printf("res is %v\n", res)
+
+	res,_ = tokenizer.Tokenize("2017/02/04 09:06:00 DB Connect 127.0.0.1 user=bear34")
+	fmt.Printf("res is %v\n", res)
+
+	res,_ = tokenizer.Tokenize("2017/02/04 09:07:00 DB Disconnect 127.0.0.1 user=bear34")
+	fmt.Printf("res is %v\n", res)
+
+	res,_ = tokenizer.Tokenize("2017/02/04 09:08:00 logout 127.0.0.1 user=bear34")
+	fmt.Printf("res is %v\n", res)
+
+	res,_ = tokenizer.Tokenize("2017/02/04 09:05:00 login 127.0.0.1 user=bear#1")
+	fmt.Printf("res is %v\n", res)
+
+	res,_ = tokenizer.Tokenize("2017/02/04 09:06:00 DB Connect 127.0.0.1 user=bear#1")
+	fmt.Printf("res is %v\n", res)
+
+	res,_ = tokenizer.Tokenize("2017/02/04 09:07:00 DB Disconnect 127.0.0.1 user=bear#1")
+	fmt.Printf("res is %v\n", res)
+
+	res,_ = tokenizer.Tokenize("2017/02/04 09:08:00 logout 127.0.0.1 user=bear#1")
+	fmt.Printf("res is %v\n", res)
 }

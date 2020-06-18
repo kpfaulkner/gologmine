@@ -5,7 +5,9 @@ import (
 )
 
 const (
-  NOTPSACERREGEX string = "^[\t\n\x0B\f\r]+"
+  //NOTSPACEREGEX string = "[-!$%#^&*()_+|~`{}[]:\";'<>?,./\\W]+"
+	NOTSPACEREGEX string = ".*[!@#$%^&*()\"\\[\\]\"{}]+.*"
+	//NOTSPACEREGEX string = "(\\w+\\S+|\\S+\\w+|\\w+\\S+\\w+)"
 )
 
 const (
@@ -19,7 +21,7 @@ type NotSpaceTokenizer struct {
 
 func NewNotSpaceTokenizer() NotSpaceTokenizer{
 	nt := NotSpaceTokenizer{}
-	nt.notSpaceRE,_ = regexp.Compile(NOTPSACERREGEX)
+	nt.notSpaceRE,_ = regexp.Compile(NOTSPACEREGEX)
 	return nt
 }
 
