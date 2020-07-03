@@ -1,29 +1,94 @@
 package logmine
 
-import "io"
+import (
+	"bufio"
+	"github.com/kpfaulkner/gologmine/pkg/logmine/tokenizers"
+	log "github.com/sirupsen/logrus"
+	"io"
+	"strings"
+)
 
+type TokenizedLogEntry struct {
+	Tokens []tokenizers.DataType
+}
+
+// LogMine .. initial implementation.
 type LogMine struct {
+	tokenizer Tokenizer
 
+	clusterProcessor ClusterProcessor
+	//
+	tokenizedLogEntries []TokenizedLogEntry
 }
 
 func NewLogMine() LogMine {
 	lm := LogMine{}
+	lm.tokenizer = NewTokenizer()
+	lm.clusterProcessor = NewClusterProcessor()
 
 	return lm
 }
 
+func (lm *LogMine) ProcessLogs(reader io.Reader) error {
 
-func (lm *LogMine) Preprocess(reader io.Reader) error {
+	// preprocess + datatype identification
+	tokenizedLogEntries, err := lm.Preprocess(reader)
+	if err != nil {
+		return err
+	}
+	lm.tokenizedLogEntries = tokenizedLogEntries
 
-	// tokenize
+	// generate clusters.
 
-	// datatype identification
+	// other stuff :)
 
 	return nil
 }
 
-func (lm *LogMine) PatternTreeGeneration() error {
+// willProcessLine.... eg dont proces if comments etc.
+// For now, will just filter out lines where the first
+// non white space is a #
+func willProcessLine(l string) bool {
+	if strings.TrimSpace(l)[0] == '#' {
+		return false
+	}
 
+	return true
+}
+
+// Preprocess will read in ALL log entries from a file(reader)
+// and process them. Will return a TokenizedLogEntry for each log line
+// read.
+func (lm *LogMine) Preprocess(reader io.Reader) ([]TokenizedLogEntry, error) {
+
+	tokenizedLogEntries := []TokenizedLogEntry{}
+
+	// read each log entry and preprocess them.
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		l := scanner.Text()
+		if willProcessLine(l) {
+			tokens, err := lm.tokenizer.Tokenize(l)
+			if err != nil {
+				log.Errorf("Error PreProcess %s\n", err.Error())
+				return nil, err
+			}
+			te := TokenizedLogEntry{Tokens: tokens}
+			tokenizedLogEntries = append(tokenizedLogEntries, te)
+		}
+	}
+
+	return tokenizedLogEntries, nil
+}
+
+func (lm *LogMine) ClusterGeneration() error {
+
+	for _, l := range lm.tokenizedLogEntries {
+		err := lm.clusterProcessor.AddLogEntry(l)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

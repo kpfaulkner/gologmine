@@ -1,20 +1,20 @@
 package logmine
 
 const (
-  MatchAward int = 10
-  MismatchPenalty int = 1
-  GapPenalty = 0
+	MatchAward      int = 10
+	MismatchPenalty int = 1
+	GapPenalty          = 0
 )
 
 func maxInt(nums ...int) int {
 	max := nums[0]
-  for _,i := range nums {
-  	if max < i {
-  		max = i
-	  }
-  }
+	for _, i := range nums {
+		if max < i {
+			max = i
+		}
+	}
 
-  return max
+	return max
 }
 
 // make 2d array of zeros :)
@@ -24,10 +24,10 @@ func zeros(rows int, cols int) [][]int {
 		retVal[r] = make([]int, cols)
 	}
 
-  return retVal
+	return retVal
 }
 
-func matchScore( a string, b string) int {
+func matchScore(a string, b string) int {
 	if a == b {
 		return MatchAward
 	}
@@ -46,16 +46,16 @@ func reverse(s []string) []string {
 	return s
 }
 
-func finalize( align1 []string, align2 []string) ([]string, []string){
+func finalize(align1 []string, align2 []string) ([]string, []string) {
 
-  align1 = reverse(align1)
+	align1 = reverse(align1)
 	align2 = reverse(align2)
 
 	symbol := ""
 
 	score := 0
 	identity := float64(0)
-	for i := 0 ; i< len(align1); i++ {
+	for i := 0; i < len(align1); i++ {
 		if align1[i] == align2[i] {
 			symbol = symbol + align1[i]
 			identity = identity + 1
@@ -73,23 +73,22 @@ func finalize( align1 []string, align2 []string) ([]string, []string){
 	return align1, align2
 }
 
-
 // implementation of the Smith Waterman algorithm ( https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm )
 // based off the code in https://github.com/eriekrahman/PlagiarismDetector  since quite frankly porting Python code
 // is easier than reading that algorithm.  yes, blind obedience to the python code :P
-func SmithWaterman( seq1 []string, seq2 []string) ([]string, []string, error) {
+func SmithWaterman(seq1 []string, seq2 []string) ([]string, []string, error) {
 
 	m := len(seq1)
 	n := len(seq2)
 
 	score := zeros(m+1, n+1)
 	pointer := zeros(m+1, n+1)
-  maxI := 0
-  maxJ := 0
+	maxI := 0
+	maxJ := 0
 
 	maxScore := 0
-	for i := 1 ; i< m+1 ; i++ {
-		for j := 1 ; j< n+1 ; j++ {
+	for i := 1; i < m+1; i++ {
+		for j := 1; j < n+1; j++ {
 			scoreDiagonal := score[i-1][j-1] + matchScore(seq1[i-1], seq2[j-1])
 			scoreUp := score[i][j-1] + GapPenalty
 			scoreLeft := score[i-1][j] + GapPenalty
@@ -132,7 +131,7 @@ func SmithWaterman( seq1 []string, seq2 []string) ([]string, []string, error) {
 			align1 = append(align1, "-")
 			align2 = append(align2, seq2[j-1])
 			j--
-		} else if pointer[i][j] == 1{
+		} else if pointer[i][j] == 1 {
 			align1 = append(align1, seq1[i-1])
 			align2 = append(align2, "-")
 			i--
@@ -141,5 +140,5 @@ func SmithWaterman( seq1 []string, seq2 []string) ([]string, []string, error) {
 
 	a1, a2 := finalize(align1, align2)
 
-	return a1,a2,nil
+	return a1, a2, nil
 }

@@ -23,11 +23,11 @@ func NewTokenizer() Tokenizer {
 	t.tokenDelimiters = []string{"="}
 
 	// list all the specifictokenizers that we're going to use.
-	t.tokenizerCheckers = []tokenizers.TokenizerChecker{tokenizers.NewDateTokenizer() , tokenizers.NewTimeTokenizer(),
-																					 tokenizers.NewIPV4Tokenizer(), tokenizers.NewNumberTokenizer(),
-																					 tokenizers.NewWordTokenizer(),tokenizers.NewNotSpaceTokenizer()}
+	t.tokenizerCheckers = []tokenizers.TokenizerChecker{tokenizers.NewDateTokenizer(), tokenizers.NewTimeTokenizer(),
+		tokenizers.NewIPV4Tokenizer(), tokenizers.NewNumberTokenizer(),
+		tokenizers.NewWordTokenizer(), tokenizers.NewNotSpaceTokenizer()}
 
-//																					 tokenizers.NewAnyDataTokenizer()}
+	//																					 tokenizers.NewAnyDataTokenizer()}
 	return t
 }
 
@@ -36,8 +36,8 @@ func NewTokenizer() Tokenizer {
 // Just equals (=) for now...but will expand this to cover many chars
 func (t Tokenizer) addSpacesToLog(log string) string {
 	l := log
-	for _,ss := range t.tokenDelimiters {
-		l = strings.ReplaceAll(l,ss, " " +ss+" ")
+	for _, ss := range t.tokenDelimiters {
+		l = strings.ReplaceAll(l, ss, " "+ss+" ")
 	}
 	return l
 }
@@ -47,7 +47,7 @@ func (t Tokenizer) addSpacesToLog(log string) string {
 // and results in the associated DataType
 func (t Tokenizer) processToken(token string) (tokenizers.DataType, error) {
 
-	for _,tokenizer := range t.tokenizerCheckers {
+	for _, tokenizer := range t.tokenizerCheckers {
 		if tokenizer.CheckToken(token) {
 			return tokenizer.GetDataType(), nil
 		}
@@ -57,14 +57,14 @@ func (t Tokenizer) processToken(token string) (tokenizers.DataType, error) {
 	return tokenizers.DataType(token), nil
 }
 
-func (t Tokenizer) Tokenize(log string) ([]tokenizers.DataType,error) {
+func (t Tokenizer) Tokenize(log string) ([]tokenizers.DataType, error) {
 
 	// add spaces around equals signs... probably more.
 	modifiedLog := t.addSpacesToLog(log)
 	tokens := strings.Split(modifiedLog, " ")
 
 	dataTypeArray := []tokenizers.DataType{}
-	for _,token := range tokens {
+	for _, token := range tokens {
 		//fmt.Printf("token: %s\n", token)
 		trimmedToken := strings.TrimSpace(token)
 		dt, err := t.processToken(trimmedToken)
@@ -77,4 +77,3 @@ func (t Tokenizer) Tokenize(log string) ([]tokenizers.DataType,error) {
 
 	return dataTypeArray, nil
 }
-

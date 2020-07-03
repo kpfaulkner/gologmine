@@ -5,7 +5,7 @@ import (
 )
 
 const (
-  ANYDATAREGEX string = ".*"
+	ANYDATAREGEX string = ".*"
 )
 
 const (
@@ -13,18 +13,17 @@ const (
 )
 
 type AnyDataTokenizer struct {
-  anyDataRE *regexp.Regexp
-
+	anyDataRE *regexp.Regexp
 }
 
-func NewAnyDataTokenizer() AnyDataTokenizer{
+func NewAnyDataTokenizer() AnyDataTokenizer {
 	at := AnyDataTokenizer{}
-	at.anyDataRE,_ = regexp.Compile(ANYDATAREGEX)
+	at.anyDataRE, _ = regexp.Compile(ANYDATAREGEX)
 	return at
 }
 
 // CheckDate checks a number of different date formats and indicates if a match is found.
-func (at AnyDataTokenizer) CheckToken(token string ) bool {
+func (at AnyDataTokenizer) CheckToken(token string) bool {
 	return at.anyDataRE.MatchString(token)
 }
 
