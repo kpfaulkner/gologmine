@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/kpfaulkner/gologmine/pkg/logmine"
-	"log"
+	"os"
 )
 
 // hopefully this ends up as a working implementation of LogMine
@@ -52,16 +52,9 @@ func testTokenizer() {
 func main() {
 	fmt.Printf("so it begins...\n")
 
-	testTokenizer()
+	lm := logmine.NewLogMine()
+  f, _ := os.Open("test.log")
 
-	//s1 := []string{}
-	//s2 := []string{}
-	a1, a2, err := logmine.SmithWaterman([]string{"A", "B", "C"}, []string{"A", "C"})
-	if err != nil {
-		log.Fatalf("error %s\n", err.Error())
-	}
-
-	fmt.Printf("a1 %v\n", a1)
-	fmt.Printf("a2 %v\n", a2)
+  lm.ProcessLogsFromReader(f)
 
 }

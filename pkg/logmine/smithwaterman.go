@@ -1,5 +1,7 @@
 package logmine
 
+import "github.com/kpfaulkner/gologmine/pkg/logmine/tokenizers"
+
 const (
 	MatchAward      int = 10
 	MismatchPenalty int = 1
@@ -27,31 +29,31 @@ func zeros(rows int, cols int) [][]int {
 	return retVal
 }
 
-func matchScore(a string, b string) int {
+func matchScore(a tokenizers.DataType, b tokenizers.DataType) int {
 	if a == b {
 		return MatchAward
 	}
 
-	if a == "-" || b == "-" {
+	if a == tokenizers.ALIGNER  || b == tokenizers.ALIGNER  {
 		return GapPenalty
 	}
 
 	return MismatchPenalty
 }
 
-func reverse(s []string) []string {
+func reverse(s []tokenizers.DataType) []tokenizers.DataType {
 	for i, j := 0, len(s)-1; i < j; i, j = i+1, j-1 {
 		s[i], s[j] = s[j], s[i]
 	}
 	return s
 }
 
-func finalize(align1 []string, align2 []string) ([]string, []string) {
+func finalize(align1 []tokenizers.DataType, align2 []tokenizers.DataType) ([]tokenizers.DataType, []tokenizers.DataType) {
 
 	align1 = reverse(align1)
 	align2 = reverse(align2)
 
-	symbol := ""
+	symbol := tokenizers.DataType("")
 
 	score := 0
 	identity := float64(0)
@@ -60,10 +62,10 @@ func finalize(align1 []string, align2 []string) ([]string, []string) {
 			symbol = symbol + align1[i]
 			identity = identity + 1
 			score += matchScore(align1[i], align2[i])
-		} else if align1[i] != align2[i] && align1[i] != "-" && align2[i] != "-" {
+		} else if align1[i] != align2[i] && align1[i] != tokenizers.ALIGNER && align2[i] != tokenizers.ALIGNER  {
 			score += matchScore(align1[i], align2[i])
 			symbol += " "
-		} else if align1[i] == "-" || align2[i] == "-" {
+		} else if align1[i] == tokenizers.ALIGNER  || align2[i] == tokenizers.ALIGNER  {
 			symbol += " "
 			score += GapPenalty
 		}
@@ -76,7 +78,7 @@ func finalize(align1 []string, align2 []string) ([]string, []string) {
 // implementation of the Smith Waterman algorithm ( https://en.wikipedia.org/wiki/Smith%E2%80%93Waterman_algorithm )
 // based off the code in https://github.com/eriekrahman/PlagiarismDetector  since quite frankly porting Python code
 // is easier than reading that algorithm.  yes, blind obedience to the python code :P
-func SmithWaterman(seq1 []string, seq2 []string) ([]string, []string, error) {
+func SmithWaterman(seq1 []tokenizers.DataType, seq2 []tokenizers.DataType) ([]tokenizers.DataType, []tokenizers.DataType, error) {
 
 	m := len(seq1)
 	n := len(seq2)
@@ -116,8 +118,8 @@ func SmithWaterman(seq1 []string, seq2 []string) ([]string, []string, error) {
 		}
 	}
 
-	align1 := []string{}
-	align2 := []string{}
+	align1 := []tokenizers.DataType{}
+	align2 := []tokenizers.DataType{}
 	i := maxI
 	j := maxJ
 
@@ -128,12 +130,12 @@ func SmithWaterman(seq1 []string, seq2 []string) ([]string, []string, error) {
 			i--
 			j--
 		} else if pointer[i][j] == 2 {
-			align1 = append(align1, "-")
+			align1 = append(align1, tokenizers.ALIGNER )
 			align2 = append(align2, seq2[j-1])
 			j--
 		} else if pointer[i][j] == 1 {
 			align1 = append(align1, seq1[i-1])
-			align2 = append(align2, "-")
+			align2 = append(align2, tokenizers.ALIGNER )
 			i--
 		}
 	}

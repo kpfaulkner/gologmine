@@ -65,13 +65,13 @@ func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry) error {
 
 	addedToCluster := false
 	// calculate which cluster it can go into.
-	for _, cluster := range cp.clusters {
+	for index, cluster := range cp.clusters {
 		// just get distance between new log entry and first element in cluster.
 		dist := LogDistance(cluster.logsInCluster[0], l)
 
 		// add to first cluster that meets criteria
 		if dist <= cp.maxDistance {
-			cluster.logsInCluster = append(cluster.logsInCluster, l)
+			cp.clusters[index].logsInCluster = append(cp.clusters[index].logsInCluster, l)
 			addedToCluster = true
 			break
 		}
@@ -85,4 +85,105 @@ func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry) error {
 	}
 
 	return nil
+}
+
+// mergeAlignedLogs 2 log entries should have same length (aligned)
+// now go through rules to determine what the merged version looks like:
+func mergeAlignedLogs( align1 []tokenizers.DataType, align2 []tokenizers.DataType) ([]tokenizers.DataType, error) {
+
+	result := make([]tokenizers.DataType, len(align1))
+
+	var tokenToUse tokenizers.DataType
+	for i:=0;i<len(align1);i++ {
+		token1 := align1[i]
+		token2 := align2[i]
+
+		if token1 == token2 {
+			tokenToUse = token1
+		}
+
+		if token1 == tokenizers.DATE && token2 == tokenizers.NOTSPACE {
+			tokenToUse = tokenizers.ANYDATA
+		}
+
+		if token1 == tokenizers.WORD && token2 == tokenizers.NOTSPACE {
+			tokenToUse = tokenizers.NOTSPACE
+		}
+
+		if token1 == tokenizers.WORD && token2 == tokenizers.NUMBER{
+			tokenToUse = tokenizers.NOTSPACE
+		}
+
+		if token1 == tokenizers.IPV4 && token2 == tokenizers.WORD{
+			tokenToUse = tokenizers.NOTSPACE
+		}
+
+		if token1 == tokenizers.IPV4 && token2 == tokenizers.NUMBER{
+			tokenToUse = tokenizers.NOTSPACE
+		}
+
+		if token1 == tokenizers.IPV4 && token2 == tokenizers.NUMBER{
+			tokenToUse = tokenizers.NOTSPACE
+		}
+
+		if token1 == tokenizers.IPV4 && token2 == tokenizers.DATE{
+			tokenToUse = tokenizers.NOTSPACE
+		}
+
+		if token1 == tokenizers.IPV4 && token2 == tokenizers.TIME{
+			tokenToUse = tokenizers.NOTSPACE
+		}
+
+		if token1 == tokenizers.ALIGNER && token2 == tokenizers.WORD{
+			tokenToUse = tokenizers.ANYDATA
+		}
+
+		if token1 == tokenizers.ALIGNER && token2 == tokenizers.NUMBER{
+			tokenToUse = tokenizers.ANYDATA
+		}
+
+		if token1 == tokenizers.ALIGNER && token2 == tokenizers.NOTSPACE{
+			tokenToUse = tokenizers.ANYDATA
+		}
+
+		if token1 == tokenizers.ALIGNER && token2 == tokenizers.DATE{
+			tokenToUse = tokenizers.ANYDATA
+		}
+
+		if token1 == tokenizers.ALIGNER && token2 == tokenizers.TIME{
+			tokenToUse = tokenizers.ANYDATA
+		}
+
+		result[i] = tokenToUse
+
+	}
+
+	return result, nil
+}
+
+// Process a cluster (collection of TokenizedLogEntry) and generate a generic
+// TokenizedLogEntry that will represent the entire cluster.
+func (cp *ClusterProcessor) ProcessSingleCluster( cluster Cluster) (*TokenizedLogEntry, error) {
+
+	existingEntry := cluster.logsInCluster[0].Tokens
+	for _,entry := range cluster.logsInCluster[1:] {
+
+		// align the 2 logs.
+		align1, align2, err := SmithWaterman(existingEntry, entry.Tokens)
+		if err != nil {
+			return nil, err
+		}
+
+		// merge the alignments
+		mergedResult, err := mergeAlignedLogs( align1, align2)
+		if err != nil {
+			return nil, err
+		}
+
+		existingEntry = mergedResult
+	}
+
+  tle := TokenizedLogEntry{}
+  tle.Tokens = existingEntry
+  return &tle,nil
 }

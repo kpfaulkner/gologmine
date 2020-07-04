@@ -6,3 +6,8 @@ type TokenizerChecker interface {
 	CheckToken(token string) bool
 	GetDataType() DataType
 }
+
+
+const (
+	ALIGNER DataType = "---"
+)

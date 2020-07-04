@@ -9,7 +9,7 @@ const (
 )
 
 const (
-	ANYDATA DataType = "ANYDATA"
+	ANYDATA DataType = "*"
 )
 
 type AnyDataTokenizer struct {

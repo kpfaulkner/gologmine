@@ -2,6 +2,7 @@ package logmine
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/kpfaulkner/gologmine/pkg/logmine/tokenizers"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -29,7 +30,7 @@ func NewLogMine() LogMine {
 	return lm
 }
 
-func (lm *LogMine) ProcessLogs(reader io.Reader) error {
+func (lm *LogMine) ProcessLogsFromReader(reader io.Reader) error {
 
 	// preprocess + datatype identification
 	tokenizedLogEntries, err := lm.Preprocess(reader)
@@ -39,6 +40,21 @@ func (lm *LogMine) ProcessLogs(reader io.Reader) error {
 	lm.tokenizedLogEntries = tokenizedLogEntries
 
 	// generate clusters.
+	err = lm.ClusterGeneration()
+	if err != nil {
+		return err
+	}
+
+	// now process/merge each cluster.
+	for _,cluster := range lm.clusterProcessor.clusters {
+		tokenizedLogEntry, err := lm.clusterProcessor.ProcessSingleCluster(cluster)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("cluster %v\n", tokenizedLogEntry.Tokens)
+
+	}
 
 	// other stuff :)
 
