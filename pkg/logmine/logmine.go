@@ -2,7 +2,6 @@ package logmine
 
 import (
 	"bufio"
-	"fmt"
 	"github.com/kpfaulkner/gologmine/pkg/logmine/tokenizers"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -20,46 +19,75 @@ type LogMine struct {
 	clusterProcessor ClusterProcessor
 	//
 	tokenizedLogEntries []TokenizedLogEntry
+
+	// distances used for calculations
+	distances []float64
 }
 
-func NewLogMine() LogMine {
+func NewLogMine(distances []float64) LogMine {
 	lm := LogMine{}
 	lm.tokenizer = NewTokenizer()
-	lm.clusterProcessor = NewClusterProcessor()
+	lm.distances = distances
+	lm.clusterProcessor = NewClusterProcessor(lm.distances)
+
 
 	return lm
 }
 
-func (lm *LogMine) ProcessLogsFromReader(reader io.Reader) error {
+func (lm *LogMine) ProcessLogsFromReader(reader io.Reader) ([]TokenizedLogEntry, error) {
 
 	// preprocess + datatype identification
 	tokenizedLogEntries, err := lm.Preprocess(reader)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	lm.tokenizedLogEntries = tokenizedLogEntries
 
 	// generate clusters.
-	err = lm.ClusterGeneration()
+	err = lm.ClusterGeneration(lm.tokenizedLogEntries,0)
 	if err != nil {
-		return err
+		return nil, err
 	}
+
+	results := []TokenizedLogEntry{}
 
 	// now process/merge each cluster.
 	for _,cluster := range lm.clusterProcessor.clusters {
 		tokenizedLogEntry, err := lm.clusterProcessor.ProcessSingleCluster(cluster)
 		if err != nil {
-			return err
+			return nil, err
 		}
-
-		fmt.Printf("cluster %v\n", tokenizedLogEntry.Tokens)
-
+		results = append(results, *tokenizedLogEntry)
 	}
 
-	// other stuff :)
-
-	return nil
+	return results, nil
 }
+
+// takes processed logs and reprocess them.
+func (lm *LogMine) ProcessAgain(logs []TokenizedLogEntry) ([]TokenizedLogEntry, error) {
+
+  lm.clusterProcessor.Clear()
+
+	// generate clusters.
+	err := lm.ClusterGeneration(logs,1)
+	if err != nil {
+		return nil, err
+	}
+
+	results := []TokenizedLogEntry{}
+
+	// now process/merge each cluster.
+	for _,cluster := range lm.clusterProcessor.clusters {
+		tokenizedLogEntry, err := lm.clusterProcessor.ProcessSingleCluster(cluster)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, *tokenizedLogEntry)
+	}
+
+	return results, nil
+}
+
 
 // willProcessLine.... eg dont proces if comments etc.
 // For now, will just filter out lines where the first
@@ -97,10 +125,10 @@ func (lm *LogMine) Preprocess(reader io.Reader) ([]TokenizedLogEntry, error) {
 	return tokenizedLogEntries, nil
 }
 
-func (lm *LogMine) ClusterGeneration() error {
+func (lm *LogMine) ClusterGeneration(logs []TokenizedLogEntry, level int) error {
 
-	for _, l := range lm.tokenizedLogEntries {
-		err := lm.clusterProcessor.AddLogEntry(l)
+	for _, l := range logs {
+		err := lm.clusterProcessor.AddLogEntry(l, level)
 		if err != nil {
 			return err
 		}

@@ -1,6 +1,7 @@
 package logmine
 
 import (
+	"fmt"
 	"github.com/kpfaulkner/gologmine/pkg/logmine/tokenizers"
 	"math"
 )
@@ -29,13 +30,19 @@ type Cluster struct {
 type ClusterProcessor struct {
 	clusters []Cluster
 
-	maxDistance float64
+	//MaxDistance float64
+	distances []float64
 }
 
-func NewClusterProcessor() ClusterProcessor {
+func NewClusterProcessor(distances []float64) ClusterProcessor {
 	c := ClusterProcessor{}
-	c.maxDistance = 0.01 // just going off presentation  for now. Will need to figure this out.
+	//c.MaxDistance = 0.01 // just going off presentation  for now. Will need to figure this out.
+	c.distances = distances
 	return c
+}
+
+func (cp *ClusterProcessor) Clear() {
+  cp.clusters = []Cluster{}
 }
 
 func score(e1 tokenizers.DataType, e2 tokenizers.DataType) float64 {
@@ -61,20 +68,36 @@ func LogDistance(log1 TokenizedLogEntry, log2 TokenizedLogEntry) float64 {
 	return 1 - total
 }
 
-func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry) error {
+func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry, level int) error {
 
 	addedToCluster := false
+	indexOfClosestCluster := -1
+  closestDistance := 100.0
+
+  if l.Tokens[6] == tokenizers.NOTSPACE {
+  	fmt.Printf("boom\n")
+  }
+
 	// calculate which cluster it can go into.
 	for index, cluster := range cp.clusters {
 		// just get distance between new log entry and first element in cluster.
 		dist := LogDistance(cluster.logsInCluster[0], l)
 
-		// add to first cluster that meets criteria
-		if dist <= cp.maxDistance {
+		if dist <= cp.distances[level] && dist <= closestDistance {
+			indexOfClosestCluster = index
+			closestDistance = dist
+			addedToCluster = true
+		}
+
+		/*
+		// add to first cluster that meets criteria <--- mistake I think.
+		if dist <= cp.distances[level] {
+			indexOfClosestCluster = index
 			cp.clusters[index].logsInCluster = append(cp.clusters[index].logsInCluster, l)
 			addedToCluster = true
 			break
-		}
+		} */
+
 	}
 
 	// haven't added to cluster yet, so make a new one.
@@ -82,6 +105,8 @@ func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry) error {
 		c := Cluster{}
 		c.logsInCluster = append(c.logsInCluster, l)
 		cp.clusters = append(cp.clusters, c)
+	} else {
+		cp.clusters[indexOfClosestCluster].logsInCluster = append(cp.clusters[indexOfClosestCluster].logsInCluster, l)
 	}
 
 	return nil
@@ -97,6 +122,10 @@ func mergeAlignedLogs( align1 []tokenizers.DataType, align2 []tokenizers.DataTyp
 	for i:=0;i<len(align1);i++ {
 		token1 := align1[i]
 		token2 := align2[i]
+
+		if token1 == "Connect" {
+		  fmt.Printf("oops\n")
+		}
 
 		if token1 == token2 {
 			tokenToUse = token1
