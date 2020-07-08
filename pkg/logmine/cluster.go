@@ -45,14 +45,32 @@ func (cp *ClusterProcessor) Clear() {
   cp.clusters = []Cluster{}
 }
 
-func score(e1 tokenizers.DataType, e2 tokenizers.DataType) float64 {
+func score(e1 tokenizers.DataType, e2 tokenizers.DataType, level int) float64 {
+
+	if level == 0 {
+		if e1 == e2 {
+			return 1
+		}
+		return 0
+	}
+
+
+	// if a generic data type, return 1.
+  newToken := ConvertTokenDataType(e1, e2)
+  if newToken != "" {
+  	return 1
+  }
+
+  // otherwise do normal test.
+  // This is just testing out an idea.
 	if e1 == e2 {
 		return 1
 	}
 	return 0
+
 }
 
-func LogDistance(log1 TokenizedLogEntry, log2 TokenizedLogEntry) float64 {
+func LogDistance(log1 TokenizedLogEntry, log2 TokenizedLogEntry, level int) float64 {
 
 	log1Len := float64(len(log1.Tokens))
 	log2Len := float64(len(log2.Tokens))
@@ -61,7 +79,7 @@ func LogDistance(log1 TokenizedLogEntry, log2 TokenizedLogEntry) float64 {
 
 	total := 0.0
 	for i := 0; i < int(minLen); i++ {
-		s := score(log1.Tokens[i], log2.Tokens[i]) / maxLen
+		s := score(log1.Tokens[i], log2.Tokens[i], level) / maxLen
 		total += s
 	}
 
@@ -80,8 +98,9 @@ func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry, level int) error {
 
 	// calculate which cluster it can go into.
 	for index, cluster := range cp.clusters {
+
 		// just get distance between new log entry and first element in cluster.
-		dist := LogDistance(cluster.logsInCluster[0], l)
+		dist := LogDistance(cluster.logsInCluster[0], l, level)
 
 		if dist <= cp.distances[level] && dist <= closestDistance {
 			indexOfClosestCluster = index
@@ -112,6 +131,75 @@ func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry, level int) error {
 	return nil
 }
 
+func ConvertTokenDataType( token1 tokenizers.DataType, token2 tokenizers.DataType) tokenizers.DataType {
+
+	tokenToUse := tokenizers.DataType("")
+
+	if token1 == tokenizers.DATE && token2 == tokenizers.NOTSPACE {
+		tokenToUse = tokenizers.ANYDATA
+	}
+
+	if token1 == tokenizers.WORD && token2 == tokenizers.NOTSPACE {
+		tokenToUse = tokenizers.NOTSPACE
+	}
+
+	if token1 == tokenizers.WORD && token2 == tokenizers.NUMBER{
+		tokenToUse = tokenizers.NOTSPACE
+	}
+
+	if token1 == tokenizers.IPV4 && token2 == tokenizers.WORD{
+		tokenToUse = tokenizers.NOTSPACE
+	}
+
+	if token1 == tokenizers.IPV4 && token2 == tokenizers.NUMBER{
+		tokenToUse = tokenizers.NOTSPACE
+	}
+
+	if token1 == tokenizers.IPV4 && token2 == tokenizers.NUMBER{
+		tokenToUse = tokenizers.NOTSPACE
+	}
+
+	if token1 == tokenizers.IPV4 && token2 == tokenizers.DATE{
+		tokenToUse = tokenizers.NOTSPACE
+	}
+
+	if token1 == tokenizers.IPV4 && token2 == tokenizers.TIME{
+		tokenToUse = tokenizers.NOTSPACE
+	}
+
+	if token1 == tokenizers.ALIGNER && token2 == tokenizers.WORD{
+		tokenToUse = tokenizers.ANYDATA
+	}
+
+	if token1 == tokenizers.ALIGNER && token2 == tokenizers.NUMBER{
+		tokenToUse = tokenizers.ANYDATA
+	}
+
+	if token1 == tokenizers.ALIGNER && token2 == tokenizers.NOTSPACE{
+		tokenToUse = tokenizers.ANYDATA
+	}
+
+	if token1 == tokenizers.ALIGNER && token2 == tokenizers.DATE{
+		tokenToUse = tokenizers.ANYDATA
+	}
+
+	if token1 == tokenizers.ALIGNER && token2 == tokenizers.TIME{
+		tokenToUse = tokenizers.ANYDATA
+	}
+
+	return tokenToUse
+}
+
+func mergeToken(t1 tokenizers.DataType, t2 tokenizers.DataType, e1 tokenizers.DataType, e2 tokenizers.DataType, replacementToken tokenizers.DataType, existingToken tokenizers.DataType) tokenizers.DataType {
+
+	if t1 == e1 && t2 == e2 ||
+		 t1 == e2 && t2 == e1 {
+		return replacementToken
+	}
+
+	return existingToken
+}
+
 // mergeAlignedLogs 2 log entries should have same length (aligned)
 // now go through rules to determine what the merged version looks like:
 func mergeAlignedLogs( align1 []tokenizers.DataType, align2 []tokenizers.DataType) ([]tokenizers.DataType, error) {
@@ -127,61 +215,26 @@ func mergeAlignedLogs( align1 []tokenizers.DataType, align2 []tokenizers.DataTyp
 		  fmt.Printf("oops\n")
 		}
 
+		// default to anydata? does this make ANY sense?
+		tokenToUse = tokenizers.ANYDATA
+
 		if token1 == token2 {
 			tokenToUse = token1
 		}
 
-		if token1 == tokenizers.DATE && token2 == tokenizers.NOTSPACE {
-			tokenToUse = tokenizers.ANYDATA
-		}
+		tokenToUse = mergeToken(token1, token2, tokenizers.DATE, tokenizers.NOTSPACE, tokenizers.ANYDATA, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.WORD, tokenizers.NOTSPACE, tokenizers.NOTSPACE, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.WORD, tokenizers.NUMBER, tokenizers.NOTSPACE, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.IPV4, tokenizers.WORD, tokenizers.NOTSPACE, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.IPV4, tokenizers.NUMBER, tokenizers.NOTSPACE, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.IPV4, tokenizers.DATE, tokenizers.ANYDATA, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.IPV4, tokenizers.TIME, tokenizers.ANYDATA, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.ALIGNER, tokenizers.WORD, tokenizers.ANYDATA, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.ALIGNER, tokenizers.NUMBER, tokenizers.ANYDATA, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.ALIGNER, tokenizers.NOTSPACE, tokenizers.ANYDATA, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.ALIGNER, tokenizers.DATE, tokenizers.ANYDATA, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.ALIGNER, tokenizers.TIME, tokenizers.ANYDATA, tokenToUse)
 
-		if token1 == tokenizers.WORD && token2 == tokenizers.NOTSPACE {
-			tokenToUse = tokenizers.NOTSPACE
-		}
-
-		if token1 == tokenizers.WORD && token2 == tokenizers.NUMBER{
-			tokenToUse = tokenizers.NOTSPACE
-		}
-
-		if token1 == tokenizers.IPV4 && token2 == tokenizers.WORD{
-			tokenToUse = tokenizers.NOTSPACE
-		}
-
-		if token1 == tokenizers.IPV4 && token2 == tokenizers.NUMBER{
-			tokenToUse = tokenizers.NOTSPACE
-		}
-
-		if token1 == tokenizers.IPV4 && token2 == tokenizers.NUMBER{
-			tokenToUse = tokenizers.NOTSPACE
-		}
-
-		if token1 == tokenizers.IPV4 && token2 == tokenizers.DATE{
-			tokenToUse = tokenizers.NOTSPACE
-		}
-
-		if token1 == tokenizers.IPV4 && token2 == tokenizers.TIME{
-			tokenToUse = tokenizers.NOTSPACE
-		}
-
-		if token1 == tokenizers.ALIGNER && token2 == tokenizers.WORD{
-			tokenToUse = tokenizers.ANYDATA
-		}
-
-		if token1 == tokenizers.ALIGNER && token2 == tokenizers.NUMBER{
-			tokenToUse = tokenizers.ANYDATA
-		}
-
-		if token1 == tokenizers.ALIGNER && token2 == tokenizers.NOTSPACE{
-			tokenToUse = tokenizers.ANYDATA
-		}
-
-		if token1 == tokenizers.ALIGNER && token2 == tokenizers.DATE{
-			tokenToUse = tokenizers.ANYDATA
-		}
-
-		if token1 == tokenizers.ALIGNER && token2 == tokenizers.TIME{
-			tokenToUse = tokenizers.ANYDATA
-		}
 
 		result[i] = tokenToUse
 

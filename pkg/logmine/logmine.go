@@ -64,12 +64,12 @@ func (lm *LogMine) ProcessLogsFromReader(reader io.Reader) ([]TokenizedLogEntry,
 }
 
 // takes processed logs and reprocess them.
-func (lm *LogMine) ProcessAgain(logs []TokenizedLogEntry) ([]TokenizedLogEntry, error) {
+func (lm *LogMine) ProcessAgain(logs []TokenizedLogEntry, level int) ([]TokenizedLogEntry, error) {
 
   lm.clusterProcessor.Clear()
 
 	// generate clusters.
-	err := lm.ClusterGeneration(logs,1)
+	err := lm.ClusterGeneration(logs,level)
 	if err != nil {
 		return nil, err
 	}
