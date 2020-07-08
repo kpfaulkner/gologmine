@@ -92,10 +92,6 @@ func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry, level int) error {
 	indexOfClosestCluster := -1
   closestDistance := 100.0
 
-  if l.Tokens[6] == tokenizers.NOTSPACE {
-  	fmt.Printf("boom\n")
-  }
-
 	// calculate which cluster it can go into.
 	for index, cluster := range cp.clusters {
 
@@ -197,6 +193,11 @@ func mergeToken(t1 tokenizers.DataType, t2 tokenizers.DataType, e1 tokenizers.Da
 		return replacementToken
 	}
 
+	// special case for aligners.... always produce an ANY data entry?
+	if t1 == tokenizers.ALIGNER || t2 == tokenizers.ALIGNER {
+		return tokenizers.ANYDATA
+	}
+
 	return existingToken
 }
 
@@ -216,7 +217,7 @@ func mergeAlignedLogs( align1 []tokenizers.DataType, align2 []tokenizers.DataTyp
 		}
 
 		// default to anydata? does this make ANY sense?
-		tokenToUse = tokenizers.ANYDATA
+		tokenToUse = tokenizers.WORD
 
 		if token1 == token2 {
 			tokenToUse = token1
@@ -234,6 +235,7 @@ func mergeAlignedLogs( align1 []tokenizers.DataType, align2 []tokenizers.DataTyp
 		tokenToUse = mergeToken(token1, token2, tokenizers.ALIGNER, tokenizers.NOTSPACE, tokenizers.ANYDATA, tokenToUse)
 		tokenToUse = mergeToken(token1, token2, tokenizers.ALIGNER, tokenizers.DATE, tokenizers.ANYDATA, tokenToUse)
 		tokenToUse = mergeToken(token1, token2, tokenizers.ALIGNER, tokenizers.TIME, tokenizers.ANYDATA, tokenToUse)
+		tokenToUse = mergeToken(token1, token2, tokenizers.ALIGNER, tokenizers.ANYDATA, tokenizers.ANYDATA, tokenToUse)
 
 
 		result[i] = tokenToUse

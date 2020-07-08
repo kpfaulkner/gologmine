@@ -71,7 +71,7 @@ func generateMaxDistances( maxDist string) ([]float64, error) {
 func main() {
 	fmt.Printf("so it begins...\n")
 
-	maxDist := flag.String("maxdist", "0.01,0.1,0.3", "Max distances for clustering. Comma separated decimals. eg 0.01,0.05 etc")
+	maxDist := flag.String("maxdist", "0.01,0.1,0.3,0.9", "Max distances for clustering. Comma separated decimals. eg 0.01,0.05 etc")
 	file := flag.String("file", "test.log", "Log file to process")
 	flag.Parse()
 
@@ -87,25 +87,25 @@ func main() {
 
   fmt.Printf("0 ======================\n")
   for _,e := range res {
-		fmt.Printf("%v\n", e.Tokens)
+		fmt.Printf("0 --------------  %v\n", e.Tokens)
   }
 
   res, err = lm.ProcessAgain(res,1)
 	fmt.Printf("1 ======================\n")
 	for _,e := range res {
-		fmt.Printf("%v\n", e.Tokens)
+		fmt.Printf("1 -------------- %v\n", e.Tokens)
 	}
 
 	res, err = lm.ProcessAgain(res,2)
 	fmt.Printf("2 ======================\n")
 	for _,e := range res {
-		fmt.Printf("%v\n", e.Tokens)
+		fmt.Printf("2 -------------- %v\n", e.Tokens)
 	}
 
 	res, err = lm.ProcessAgain(res,3)
 	fmt.Printf("3 ======================\n")
 	for _,e := range res {
-		fmt.Printf("%v\n", e.Tokens)
+		fmt.Printf("3 -------------- %v\n", e.Tokens)
 	}
 
 }
