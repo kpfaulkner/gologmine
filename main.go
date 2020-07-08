@@ -72,6 +72,7 @@ func main() {
 	fmt.Printf("so it begins...\n")
 
 	maxDist := flag.String("maxdist", "0.01,0.1,0.3,0.9", "Max distances for clustering. Comma separated decimals. eg 0.01,0.05 etc")
+	maxLevel := flag.Int("maxlevel", 3, "Max level 0-3")
 	file := flag.String("file", "test.log", "Log file to process")
 	flag.Parse()
 
@@ -80,16 +81,14 @@ func main() {
 	lm := logmine.NewLogMine(distances)
   f, _ := os.Open(*file)
 
-  res, err := lm.ProcessLogsFromReader(f)
+  err = lm.ProcessLogsFromReader(f, *maxLevel)
   if err != nil {
   	log.Fatalf("error while processing. %s\n", err.Error())
   }
 
-  fmt.Printf("0 ======================\n")
-  for _,e := range res {
-		fmt.Printf("0 --------------  %v\n", e.Tokens)
-  }
+  lm.GenerateFinalOutput()
 
+  /*
   res, err = lm.ProcessAgain(res,1)
 	fmt.Printf("1 ======================\n")
 	for _,e := range res {
@@ -107,5 +106,5 @@ func main() {
 	for _,e := range res {
 		fmt.Printf("3 -------------- %v\n", e.Tokens)
 	}
-
+*/
 }

@@ -2,6 +2,7 @@ package logmine
 
 import (
 	"bufio"
+	"fmt"
 	"github.com/kpfaulkner/gologmine/pkg/logmine/tokenizers"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -34,39 +35,49 @@ func NewLogMine(distances []float64) LogMine {
 	return lm
 }
 
-func (lm *LogMine) ProcessLogsFromReader(reader io.Reader) ([]TokenizedLogEntry, error) {
+func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
 
 	// preprocess + datatype identification
 	tokenizedLogEntries, err := lm.Preprocess(reader)
 	if err != nil {
-		return nil, err
-	}
-	lm.tokenizedLogEntries = tokenizedLogEntries
-
-	// generate clusters.
-	err = lm.ClusterGeneration(lm.tokenizedLogEntries,0)
-	if err != nil {
-		return nil, err
+		return  err
 	}
 
-	results := []TokenizedLogEntry{}
+	// loop through all the levels.
+	for level:=0 ; level <= maxLevel; level++ {
 
-	// now process/merge each cluster.
-	for _,cluster := range lm.clusterProcessor.clusters {
-		tokenizedLogEntry, err := lm.clusterProcessor.ProcessSingleCluster(cluster)
+		// generate clusters.
+		err = lm.ClusterGeneration(tokenizedLogEntries, level)
 		if err != nil {
-			return nil, err
+			return  err
 		}
-		results = append(results, *tokenizedLogEntry)
+
+		newTokenizedLogEntries := []TokenizedLogEntry{}
+
+		// now process/merge each cluster in the cluster "level"
+		for index, cluster := range lm.clusterProcessor.clusters[level] {
+			tokenizedLogEntry, err := lm.clusterProcessor.ProcessSingleCluster(cluster)
+			if err != nil {
+				return  err
+			}
+
+			// record pattern for cluster.
+			cluster.PatternForCluster = *tokenizedLogEntry
+			lm.clusterProcessor.clusters[level][index] = cluster
+			newTokenizedLogEntries = append(newTokenizedLogEntries, *tokenizedLogEntry)
+			//results = append(results, *tokenizedLogEntry)
+		}
+		tokenizedLogEntries = newTokenizedLogEntries
 	}
 
-	return results, nil
+	return  nil
 }
 
+/*
 // takes processed logs and reprocess them.
 func (lm *LogMine) ProcessAgain(logs []TokenizedLogEntry, level int) ([]TokenizedLogEntry, error) {
 
-  lm.clusterProcessor.Clear()
+  //lm.clusterProcessor.Clear()
 
 	// generate clusters.
 	err := lm.ClusterGeneration(logs,level)
@@ -87,7 +98,7 @@ func (lm *LogMine) ProcessAgain(logs []TokenizedLogEntry, level int) ([]Tokenize
 
 	return results, nil
 }
-
+*/
 
 // willProcessLine.... eg dont proces if comments etc.
 // For now, will just filter out lines where the first
@@ -136,7 +147,15 @@ func (lm *LogMine) ClusterGeneration(logs []TokenizedLogEntry, level int) error 
 	return nil
 }
 
+
+// just display to stdout for now.
 func (lm *LogMine) GenerateFinalOutput() error {
+
+	lastLevel := len(lm.clusterProcessor.clusters) - 1
+
+	for _,c := range lm.clusterProcessor.clusters[lastLevel] {
+		fmt.Printf("%v\n",c.PatternForCluster)
+	}
 
 	return nil
 }

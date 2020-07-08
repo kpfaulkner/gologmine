@@ -1,7 +1,6 @@
 package logmine
 
 import (
-	"fmt"
 	"github.com/kpfaulkner/gologmine/pkg/logmine/tokenizers"
 	"math"
 )
@@ -9,6 +8,11 @@ import (
 type Cluster struct {
 	score         float64 // floats ok for this?
 	logsInCluster []TokenizedLogEntry
+	PatternForCluster TokenizedLogEntry
+}
+
+type ClusterGeneration struct {
+	Count int // number of entries in this cluster generation
 }
 
 // Rules for clustering.
@@ -28,7 +32,11 @@ type Cluster struct {
 // --- + NOTSPACE = *
 // --- + DATETIME = *
 type ClusterProcessor struct {
-	clusters []Cluster
+
+	// list of list of clusters.
+	// first index is level dealing with, second index are all the clusters in that level.
+	// clusters[0][2] is level 0 clusters... and getting the 3rd of that level.
+	clusters [][]Cluster
 
 	//MaxDistance float64
 	distances []float64
@@ -41,8 +49,8 @@ func NewClusterProcessor(distances []float64) ClusterProcessor {
 	return c
 }
 
-func (cp *ClusterProcessor) Clear() {
-  cp.clusters = []Cluster{}
+func (cp *ClusterProcessor) ClearXX() {
+  //cp.clusters = []Cluster{}
 }
 
 func score(e1 tokenizers.DataType, e2 tokenizers.DataType, level int) float64 {
@@ -53,7 +61,6 @@ func score(e1 tokenizers.DataType, e2 tokenizers.DataType, level int) float64 {
 		}
 		return 0
 	}
-
 
 	// if a generic data type, return 1.
   newToken := ConvertTokenDataType(e1, e2)
@@ -92,10 +99,16 @@ func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry, level int) error {
 	indexOfClosestCluster := -1
   closestDistance := 100.0
 
+  // add empty cluster list if required
+  if len(cp.clusters) < level +1 {
+  	cp.clusters = append(cp.clusters, []Cluster{})
+  }
+
 	// calculate which cluster it can go into.
-	for index, cluster := range cp.clusters {
+	for index, cluster := range cp.clusters[level] {
 
 		// just get distance between new log entry and first element in cluster.
+		// just use first entry for appropriate level.
 		dist := LogDistance(cluster.logsInCluster[0], l, level)
 
 		if dist <= cp.distances[level] && dist <= closestDistance {
@@ -103,25 +116,15 @@ func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry, level int) error {
 			closestDistance = dist
 			addedToCluster = true
 		}
-
-		/*
-		// add to first cluster that meets criteria <--- mistake I think.
-		if dist <= cp.distances[level] {
-			indexOfClosestCluster = index
-			cp.clusters[index].logsInCluster = append(cp.clusters[index].logsInCluster, l)
-			addedToCluster = true
-			break
-		} */
-
 	}
 
 	// haven't added to cluster yet, so make a new one.
 	if !addedToCluster {
 		c := Cluster{}
 		c.logsInCluster = append(c.logsInCluster, l)
-		cp.clusters = append(cp.clusters, c)
+		cp.clusters[level] = append(cp.clusters[level], c)
 	} else {
-		cp.clusters[indexOfClosestCluster].logsInCluster = append(cp.clusters[indexOfClosestCluster].logsInCluster, l)
+		cp.clusters[level][indexOfClosestCluster].logsInCluster = append(cp.clusters[level][indexOfClosestCluster].logsInCluster, l)
 	}
 
 	return nil
@@ -212,11 +215,7 @@ func mergeAlignedLogs( align1 []tokenizers.DataType, align2 []tokenizers.DataTyp
 		token1 := align1[i]
 		token2 := align2[i]
 
-		if token1 == "Connect" {
-		  fmt.Printf("oops\n")
-		}
-
-		// default to anydata? does this make ANY sense?
+		// default to word? does this make ANY sense?
 		tokenToUse = tokenizers.WORD
 
 		if token1 == token2 {
