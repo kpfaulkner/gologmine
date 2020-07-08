@@ -73,38 +73,11 @@ func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
 	return  nil
 }
 
-/*
-// takes processed logs and reprocess them.
-func (lm *LogMine) ProcessAgain(logs []TokenizedLogEntry, level int) ([]TokenizedLogEntry, error) {
-
-  //lm.clusterProcessor.Clear()
-
-	// generate clusters.
-	err := lm.ClusterGeneration(logs,level)
-	if err != nil {
-		return nil, err
-	}
-
-	results := []TokenizedLogEntry{}
-
-	// now process/merge each cluster.
-	for _,cluster := range lm.clusterProcessor.clusters {
-		tokenizedLogEntry, err := lm.clusterProcessor.ProcessSingleCluster(cluster)
-		if err != nil {
-			return nil, err
-		}
-		results = append(results, *tokenizedLogEntry)
-	}
-
-	return results, nil
-}
-*/
-
 // willProcessLine.... eg dont proces if comments etc.
 // For now, will just filter out lines where the first
 // non white space is a #
 func willProcessLine(l string) bool {
-	if strings.TrimSpace(l)[0] == '#' {
+	if len(l) > 0 && strings.TrimSpace(l)[0] == '#' {
 		return false
 	}
 

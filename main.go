@@ -88,23 +88,4 @@ func main() {
 
   lm.GenerateFinalOutput()
 
-  /*
-  res, err = lm.ProcessAgain(res,1)
-	fmt.Printf("1 ======================\n")
-	for _,e := range res {
-		fmt.Printf("1 -------------- %v\n", e.Tokens)
-	}
-
-	res, err = lm.ProcessAgain(res,2)
-	fmt.Printf("2 ======================\n")
-	for _,e := range res {
-		fmt.Printf("2 -------------- %v\n", e.Tokens)
-	}
-
-	res, err = lm.ProcessAgain(res,3)
-	fmt.Printf("3 ======================\n")
-	for _,e := range res {
-		fmt.Printf("3 -------------- %v\n", e.Tokens)
-	}
-*/
 }
