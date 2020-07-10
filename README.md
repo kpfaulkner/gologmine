@@ -1,6 +1,6 @@
 # gologmine
 
-Log clustering library heavily based on the LogMine algorithm ( https://www.cs.unm.edu/~mueen/Papers/LogMine.pdf )
+Log clustering library heavily based on the LogMine algorithm ( https://www.cs.unm.edu/~mueen/Papers/LogMine.pdf, https://www.slideshare.net/InfoQ/fast-log-analysis-by-automatically-parsing-heterogeneous-log  )
 
 ## Details
 
