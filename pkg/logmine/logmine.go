@@ -165,7 +165,7 @@ func (lm *LogMine) DisplayFinalOutput() error {
 	})
 
 	for _,c := range lm.clusterProcessor.clusters[lastLevel] {
-		fmt.Printf("count %d : pattern %s\n",c.PatternForCluster.NumberOfPreviousEntries, c.PatternForCluster.Tokens)
+		fmt.Printf("count %d : pattern %s\n",c.PatternForCluster.NumberOfPreviousEntries, c.PatternForCluster.ToString())
 	}
 
 	return nil
