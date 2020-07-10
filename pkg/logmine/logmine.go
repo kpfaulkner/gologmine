@@ -6,11 +6,23 @@ import (
 	"github.com/kpfaulkner/gologmine/pkg/logmine/tokenizers"
 	log "github.com/sirupsen/logrus"
 	"io"
+	"sort"
 	"strings"
 )
 
 type TokenizedLogEntry struct {
 	Tokens []tokenizers.DataType
+
+	// number of entries from previous level?
+	NumberOfPreviousEntries int
+}
+
+func (te TokenizedLogEntry) ToString() string {
+	resultStrings := make([]string, len(te.Tokens))
+	for i, t := range te.Tokens {
+	  resultStrings[i] = string(t)
+	}
+	return strings.Join(resultStrings," ")
 }
 
 // LogMine .. initial implementation.
@@ -61,11 +73,15 @@ func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
 				return  err
 			}
 
+			// if first level (ie ALL logs available) then store number of logs.
+			if level == 0{
+				tokenizedLogEntry.NumberOfPreviousEntries = len(cluster.logsInCluster)
+			}
+
 			// record pattern for cluster.
 			cluster.PatternForCluster = *tokenizedLogEntry
 			lm.clusterProcessor.clusters[level][index] = cluster
 			newTokenizedLogEntries = append(newTokenizedLogEntries, *tokenizedLogEntry)
-			//results = append(results, *tokenizedLogEntry)
 		}
 		tokenizedLogEntries = newTokenizedLogEntries
 	}
@@ -120,14 +136,36 @@ func (lm *LogMine) ClusterGeneration(logs []TokenizedLogEntry, level int) error 
 	return nil
 }
 
-
-// just display to stdout for now.
-func (lm *LogMine) GenerateFinalOutput() error {
+func (lm *LogMine) GenerateUsefulOutput() ([]TokenizedLogEntry, error) {
 
 	lastLevel := len(lm.clusterProcessor.clusters) - 1
 
+	clusters := lm.clusterProcessor.clusters[lastLevel]
+	sort.Slice( clusters, func (i int, j int) bool {
+		return clusters[i].PatternForCluster.NumberOfPreviousEntries > clusters[j].PatternForCluster.NumberOfPreviousEntries
+	})
+
+	results := make([]TokenizedLogEntry, len(clusters))
+	for i,c := range lm.clusterProcessor.clusters[lastLevel] {
+		results[i] = c.PatternForCluster
+	}
+
+	return results, nil
+}
+
+// just display to stdout for now.
+// order by fewest entries to most.
+func (lm *LogMine) DisplayFinalOutput() error {
+
+	lastLevel := len(lm.clusterProcessor.clusters) - 1
+
+	clusters := lm.clusterProcessor.clusters[lastLevel]
+	sort.Slice( clusters, func (i int, j int) bool {
+		return clusters[i].PatternForCluster.NumberOfPreviousEntries < clusters[j].PatternForCluster.NumberOfPreviousEntries
+	})
+
 	for _,c := range lm.clusterProcessor.clusters[lastLevel] {
-		fmt.Printf("%v\n",c.PatternForCluster)
+		fmt.Printf("count %d : pattern %s\n",c.PatternForCluster.NumberOfPreviousEntries, c.PatternForCluster.Tokens)
 	}
 
 	return nil

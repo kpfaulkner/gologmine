@@ -86,6 +86,6 @@ func main() {
   	log.Fatalf("error while processing. %s\n", err.Error())
   }
 
-  lm.GenerateFinalOutput()
+  lm.DisplayFinalOutput()
 
 }

@@ -249,6 +249,7 @@ func mergeAlignedLogs( align1 []tokenizers.DataType, align2 []tokenizers.DataTyp
 func (cp *ClusterProcessor) ProcessSingleCluster( cluster Cluster) (*TokenizedLogEntry, error) {
 
 	existingEntry := cluster.logsInCluster[0].Tokens
+	numPreviousLogs := cluster.logsInCluster[0].NumberOfPreviousEntries
 	for _,entry := range cluster.logsInCluster[1:] {
 
 		// align the 2 logs.
@@ -264,9 +265,13 @@ func (cp *ClusterProcessor) ProcessSingleCluster( cluster Cluster) (*TokenizedLo
 		}
 
 		existingEntry = mergedResult
+
+		// keep count of all logs that make up this cluster
+		numPreviousLogs += entry.NumberOfPreviousEntries
 	}
 
   tle := TokenizedLogEntry{}
   tle.Tokens = existingEntry
+  tle.NumberOfPreviousEntries = numPreviousLogs
   return &tle,nil
 }
