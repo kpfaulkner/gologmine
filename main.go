@@ -32,6 +32,7 @@ func main() {
 	maxDist := flag.String("maxdist", "0.01,0.1,0.3,0.9", "Max distances for clustering. Comma separated decimals. eg 0.01,0.05 etc")
 	maxLevel := flag.Int("maxlevel", 3, "Max level 0-3")
 	file := flag.String("file", "test.log", "Log file to process")
+	simplify := flag.Bool("simplify", false, "Simplyify output. Compact sequential WORD, NOSPACE and * outputs to single entry")
 	flag.Parse()
 
 	distances, err := generateMaxDistances(*maxDist)
@@ -44,6 +45,8 @@ func main() {
 		log.Fatalf("error while processing. %s\n", err.Error())
 	}
 
-	lm.DisplayFinalOutput()
+	lm.DisplayFinalOutput(false)
+
+	lm.DisplayFinalOutput(*simplify)
 
 }

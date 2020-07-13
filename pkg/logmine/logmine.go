@@ -25,6 +25,33 @@ func (te TokenizedLogEntry) ToString() string {
 	return strings.Join(resultStrings," ")
 }
 
+// Simplify the entries. This is to reduce the visual clutter (and would make any further analysis probably invalid/impossible
+// Basically remove continguous NOSPACE, WORD and * entries into a single one.
+// So we dont get entries such as WORD WORD NOSPACE WORD NOSPACE *  etc.
+// This is really just to make it a bit more human readable.
+func (te *TokenizedLogEntry) Simplify() error {
+	newTokenList := []tokenizers.DataType{}
+
+	hasGenericToken := false
+	for _, t := range te.Tokens {
+
+		if t == tokenizers.NOTSPACE || t == tokenizers.WORD || t == tokenizers.ANYDATA {
+			if !hasGenericToken {
+				newTokenList = append(newTokenList, tokenizers.ANYDATA)
+			}
+			hasGenericToken = true
+		} else {
+			hasGenericToken = false
+			newTokenList = append(newTokenList, t)
+		}
+	}
+
+	te.Tokens = newTokenList
+
+	return nil
+}
+
+
 // LogMine .. initial implementation.
 type LogMine struct {
 	tokenizer Tokenizer
@@ -55,9 +82,10 @@ func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
 		return  err
 	}
 
+	fmt.Printf("Preprocessing complete\n")
 	// loop through all the levels.
 	for level:=0 ; level <= maxLevel; level++ {
-
+    fmt.Printf("level %d\n", level)
 		// generate clusters.
 		err = lm.ClusterGeneration(tokenizedLogEntries, level)
 		if err != nil {
@@ -136,7 +164,7 @@ func (lm *LogMine) ClusterGeneration(logs []TokenizedLogEntry, level int) error 
 	return nil
 }
 
-func (lm *LogMine) GenerateUsefulOutput() ([]TokenizedLogEntry, error) {
+func (lm *LogMine) GenerateUsefulOutput(simplify bool) ([]TokenizedLogEntry, error) {
 
 	lastLevel := len(lm.clusterProcessor.clusters) - 1
 
@@ -155,7 +183,7 @@ func (lm *LogMine) GenerateUsefulOutput() ([]TokenizedLogEntry, error) {
 
 // just display to stdout for now.
 // order by fewest entries to most.
-func (lm *LogMine) DisplayFinalOutput() error {
+func (lm *LogMine) DisplayFinalOutput(simplify bool) error {
 
 	lastLevel := len(lm.clusterProcessor.clusters) - 1
 
@@ -165,6 +193,9 @@ func (lm *LogMine) DisplayFinalOutput() error {
 	})
 
 	for _,c := range lm.clusterProcessor.clusters[lastLevel] {
+		if simplify {
+			c.PatternForCluster.Simplify()
+		}
 		fmt.Printf("count %d : pattern %s\n",c.PatternForCluster.NumberOfPreviousEntries, c.PatternForCluster.ToString())
 	}
 
