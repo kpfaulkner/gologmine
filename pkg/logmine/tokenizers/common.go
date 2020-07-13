@@ -7,7 +7,6 @@ type TokenizerChecker interface {
 	GetDataType() DataType
 }
 
-
 const (
 	ALIGNER DataType = "---"
 )

@@ -20,9 +20,9 @@ type TokenizedLogEntry struct {
 func (te TokenizedLogEntry) ToString() string {
 	resultStrings := make([]string, len(te.Tokens))
 	for i, t := range te.Tokens {
-	  resultStrings[i] = string(t)
+		resultStrings[i] = string(t)
 	}
-	return strings.Join(resultStrings," ")
+	return strings.Join(resultStrings, " ")
 }
 
 // Simplify the entries. This is to reduce the visual clutter (and would make any further analysis probably invalid/impossible
@@ -51,7 +51,6 @@ func (te *TokenizedLogEntry) Simplify() error {
 	return nil
 }
 
-
 // LogMine .. initial implementation.
 type LogMine struct {
 	tokenizer Tokenizer
@@ -70,7 +69,6 @@ func NewLogMine(distances []float64) LogMine {
 	lm.distances = distances
 	lm.clusterProcessor = NewClusterProcessor(lm.distances)
 
-
 	return lm
 }
 
@@ -79,17 +77,17 @@ func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
 	// preprocess + datatype identification
 	tokenizedLogEntries, err := lm.Preprocess(reader)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	fmt.Printf("Preprocessing complete\n")
 	// loop through all the levels.
-	for level:=0 ; level <= maxLevel; level++ {
-    fmt.Printf("level %d\n", level)
+	for level := 0; level <= maxLevel; level++ {
+		fmt.Printf("level %d\n", level)
 		// generate clusters.
 		err = lm.ClusterGeneration(tokenizedLogEntries, level)
 		if err != nil {
-			return  err
+			return err
 		}
 
 		newTokenizedLogEntries := []TokenizedLogEntry{}
@@ -98,11 +96,11 @@ func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
 		for index, cluster := range lm.clusterProcessor.clusters[level] {
 			tokenizedLogEntry, err := lm.clusterProcessor.ProcessSingleCluster(cluster)
 			if err != nil {
-				return  err
+				return err
 			}
 
 			// if first level (ie ALL logs available) then store number of logs.
-			if level == 0{
+			if level == 0 {
 				tokenizedLogEntry.NumberOfPreviousEntries = len(cluster.logsInCluster)
 			}
 
@@ -114,7 +112,7 @@ func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
 		tokenizedLogEntries = newTokenizedLogEntries
 	}
 
-	return  nil
+	return nil
 }
 
 // willProcessLine.... eg dont proces if comments etc.
@@ -169,12 +167,12 @@ func (lm *LogMine) GenerateUsefulOutput(simplify bool) ([]TokenizedLogEntry, err
 	lastLevel := len(lm.clusterProcessor.clusters) - 1
 
 	clusters := lm.clusterProcessor.clusters[lastLevel]
-	sort.Slice( clusters, func (i int, j int) bool {
+	sort.Slice(clusters, func(i int, j int) bool {
 		return clusters[i].PatternForCluster.NumberOfPreviousEntries > clusters[j].PatternForCluster.NumberOfPreviousEntries
 	})
 
 	results := make([]TokenizedLogEntry, len(clusters))
-	for i,c := range lm.clusterProcessor.clusters[lastLevel] {
+	for i, c := range lm.clusterProcessor.clusters[lastLevel] {
 		results[i] = c.PatternForCluster
 	}
 
@@ -188,16 +186,17 @@ func (lm *LogMine) DisplayFinalOutput(simplify bool) error {
 	lastLevel := len(lm.clusterProcessor.clusters) - 1
 
 	clusters := lm.clusterProcessor.clusters[lastLevel]
-	sort.Slice( clusters, func (i int, j int) bool {
+	sort.Slice(clusters, func(i int, j int) bool {
 		return clusters[i].PatternForCluster.NumberOfPreviousEntries < clusters[j].PatternForCluster.NumberOfPreviousEntries
 	})
 
-	for _,c := range lm.clusterProcessor.clusters[lastLevel] {
-		if simplify {
-			c.PatternForCluster.Simplify()
-		}
-		fmt.Printf("count %d : pattern %s\n",c.PatternForCluster.NumberOfPreviousEntries, c.PatternForCluster.ToString())
-	}
+	tokens,_ := lm.clusterProcessor.CreateSimplifedPatternForClusterLevel(lastLevel)
+	sort.Slice(tokens, func(i int, j int) bool {
+		return tokens[i].NumberOfPreviousEntries < tokens[j].NumberOfPreviousEntries
+	})
 
+	for _,t := range tokens {
+		fmt.Printf("count %d : pattern %s\n", t.NumberOfPreviousEntries, t.ToString())
+	}
 	return nil
 }

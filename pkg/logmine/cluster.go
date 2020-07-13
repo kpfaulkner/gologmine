@@ -275,3 +275,63 @@ func (cp *ClusterProcessor) ProcessSingleCluster( cluster Cluster) (*TokenizedLo
   tle.NumberOfPreviousEntries = numPreviousLogs
   return &tle,nil
 }
+
+// SimplifyClusterLevel consolidates contiguous *,WORD or NOSPACE together
+// This is purely for display purposes and would mean any further processing would be null (nil)
+// and void :P
+func (cp *ClusterProcessor) CreateSimplifedPatternForClusterLevel(level int) ([]TokenizedLogEntry,error) {
+
+	existingClusters := cp.clusters[level]
+
+	newTokenizedLogEntrySlice := []TokenizedLogEntry{}
+	hasGenericToken := false
+	for _, t := range existingClusters{
+		pattern := t.PatternForCluster
+		newTokenSlice := []tokenizers.DataType{}
+		for _,t := range pattern.Tokens {
+			if t == tokenizers.NOTSPACE || t == tokenizers.WORD || t == tokenizers.ANYDATA {
+				if !hasGenericToken {
+					newTokenSlice = append(newTokenSlice, tokenizers.ANYDATA)
+				}
+				hasGenericToken = true
+			} else {
+				hasGenericToken = false
+				newTokenSlice = append(newTokenSlice, t)
+			}
+		}
+
+		tle := TokenizedLogEntry{}
+		tle.Tokens = newTokenSlice
+		tle.NumberOfPreviousEntries = pattern.NumberOfPreviousEntries
+		newTokenizedLogEntrySlice = append(newTokenizedLogEntrySlice, tle)
+	}
+
+	// have single slice with simplified entries.
+	/// remove dupes (but increase NumberOfPreviousEntries...
+	newTokenizedLogEntrySlice = mergeSimplifiedTokens(newTokenizedLogEntrySlice)
+
+  return newTokenizedLogEntrySlice, nil
+}
+
+
+func mergeSimplifiedTokens(logEntries []TokenizedLogEntry) []TokenizedLogEntry {
+
+	filteredSlice := []TokenizedLogEntry{}
+  tokenLUT := make(map[string]TokenizedLogEntry)
+
+	for _,le := range logEntries {
+		entry, ok := tokenLUT[le.ToString()]
+		if ok {
+			entry.NumberOfPreviousEntries += le.NumberOfPreviousEntries
+		} else {
+			entry = le
+		}
+		tokenLUT[le.ToString()] = entry
+	}
+
+	for _,v := range tokenLUT {
+		filteredSlice = append(filteredSlice, v)
+	}
+
+	return filteredSlice
+}

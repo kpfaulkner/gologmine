@@ -34,7 +34,7 @@ func matchScore(a tokenizers.DataType, b tokenizers.DataType) int {
 		return MatchAward
 	}
 
-	if a == tokenizers.ALIGNER  || b == tokenizers.ALIGNER  {
+	if a == tokenizers.ALIGNER || b == tokenizers.ALIGNER {
 		return GapPenalty
 	}
 
@@ -62,10 +62,10 @@ func finalize(align1 []tokenizers.DataType, align2 []tokenizers.DataType) ([]tok
 			symbol = symbol + align1[i]
 			identity = identity + 1
 			score += matchScore(align1[i], align2[i])
-		} else if align1[i] != align2[i] && align1[i] != tokenizers.ALIGNER && align2[i] != tokenizers.ALIGNER  {
+		} else if align1[i] != align2[i] && align1[i] != tokenizers.ALIGNER && align2[i] != tokenizers.ALIGNER {
 			score += matchScore(align1[i], align2[i])
 			symbol += " "
-		} else if align1[i] == tokenizers.ALIGNER  || align2[i] == tokenizers.ALIGNER  {
+		} else if align1[i] == tokenizers.ALIGNER || align2[i] == tokenizers.ALIGNER {
 			symbol += " "
 			score += GapPenalty
 		}
@@ -130,12 +130,12 @@ func SmithWaterman(seq1 []tokenizers.DataType, seq2 []tokenizers.DataType) ([]to
 			i--
 			j--
 		} else if pointer[i][j] == 2 {
-			align1 = append(align1, tokenizers.ALIGNER )
+			align1 = append(align1, tokenizers.ALIGNER)
 			align2 = append(align2, seq2[j-1])
 			j--
 		} else if pointer[i][j] == 1 {
 			align1 = append(align1, seq1[i-1])
-			align2 = append(align2, tokenizers.ALIGNER )
+			align2 = append(align2, tokenizers.ALIGNER)
 			i--
 		}
 	}
