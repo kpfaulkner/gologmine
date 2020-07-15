@@ -40,7 +40,7 @@ func main() {
 	lm := logmine.NewLogMine(distances)
 	f, _ := os.Open(*file)
 
-	err = lm.ProcessLogsFromReader(f, *maxLevel)
+	err = lm.ProcessLogsFromReader(f, *maxLevel, 10)
 	if err != nil {
 		log.Fatalf("error while processing. %s\n", err.Error())
 	}
