@@ -183,6 +183,21 @@ func (lm *LogMine) GenerateUsefulOutput(simplify bool) ([]TokenizedLogEntry, err
 // order by fewest entries to most.
 func (lm *LogMine) DisplayFinalOutput(simplify bool) error {
 
+	tokens, err := lm.GenerateFinalOutput(simplify)
+	if err != nil {
+		return err
+	}
+
+	for _,t := range tokens {
+		fmt.Printf("count %d : pattern %s\n", t.NumberOfPreviousEntries, t.ToString())
+	}
+	return nil
+}
+
+
+
+func (lm *LogMine) GenerateFinalOutput(simplify bool) ([]TokenizedLogEntry, error) {
+
 	lastLevel := len(lm.clusterProcessor.clusters) - 1
 
 	clusters := lm.clusterProcessor.clusters[lastLevel]
@@ -195,8 +210,6 @@ func (lm *LogMine) DisplayFinalOutput(simplify bool) error {
 		return tokens[i].NumberOfPreviousEntries < tokens[j].NumberOfPreviousEntries
 	})
 
-	for _,t := range tokens {
-		fmt.Printf("count %d : pattern %s\n", t.NumberOfPreviousEntries, t.ToString())
-	}
-	return nil
+	return tokens, nil
 }
+
