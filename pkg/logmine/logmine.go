@@ -72,15 +72,32 @@ func NewLogMine(distances []float64) LogMine {
 	return lm
 }
 
-func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
-
+func (lm *LogMine) ProcessLogsFromSlice(logEntries []string, maxLevel int) error {
 	// preprocess + datatype identification
-	tokenizedLogEntries, err := lm.Preprocess(reader)
+	tokenizedLogEntries, err := lm.PreprocessFromSlice(logEntries)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Preprocessing complete\n")
+	err = lm.processTokenizedLogEntries(tokenizedLogEntries, maxLevel)
+	return err
+}
+
+func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
+
+	// preprocess + datatype identification
+	tokenizedLogEntries, err := lm.PreprocessFromReader(reader)
+	if err != nil {
+		return err
+	}
+
+  err = lm.processTokenizedLogEntries(tokenizedLogEntries, maxLevel)
+  return err
+}
+
+
+func (lm *LogMine) processTokenizedLogEntries(tokenizedLogEntries []TokenizedLogEntry, maxLevel int) error {
+
 	// loop through all the levels.
 	for level := 0; level <= maxLevel; level++ {
 		fmt.Printf("level %d\n", level)
@@ -126,10 +143,10 @@ func willProcessLine(l string) bool {
 	return true
 }
 
-// Preprocess will read in ALL log entries from a file(reader)
+// PreprocessFromReader will read in ALL log entries from a file(reader)
 // and process them. Will return a TokenizedLogEntry for each log line
 // read.
-func (lm *LogMine) Preprocess(reader io.Reader) ([]TokenizedLogEntry, error) {
+func (lm *LogMine) PreprocessFromReader(reader io.Reader) ([]TokenizedLogEntry, error) {
 
 	tokenizedLogEntries := []TokenizedLogEntry{}
 
@@ -150,6 +167,31 @@ func (lm *LogMine) Preprocess(reader io.Reader) ([]TokenizedLogEntry, error) {
 
 	return tokenizedLogEntries, nil
 }
+
+// PreprocessFromSlice will read in ALL log entries from a file(reader)
+// and process them. Will return a TokenizedLogEntry for each log line
+// read.
+func (lm *LogMine) PreprocessFromSlice(logEntries []string) ([]TokenizedLogEntry, error) {
+
+	tokenizedLogEntries := []TokenizedLogEntry{}
+
+	// read each log entry and preprocess them.
+	for _,l := range logEntries {
+		if willProcessLine(l) {
+			tokens, err := lm.tokenizer.Tokenize(l)
+			if err != nil {
+				log.Errorf("Error PreProcess %s\n", err.Error())
+				return nil, err
+			}
+			te := TokenizedLogEntry{Tokens: tokens}
+			tokenizedLogEntries = append(tokenizedLogEntries, te)
+		}
+	}
+
+	return tokenizedLogEntries, nil
+}
+
+
 
 func (lm *LogMine) ClusterGeneration(logs []TokenizedLogEntry, level int) error {
 
@@ -193,8 +235,6 @@ func (lm *LogMine) DisplayFinalOutput(simplify bool) error {
 	}
 	return nil
 }
-
-
 
 func (lm *LogMine) GenerateFinalOutput(simplify bool) ([]TokenizedLogEntry, error) {
 
