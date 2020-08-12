@@ -102,7 +102,7 @@ func (lm *LogMine) processTokenizedLogEntries(tokenizedLogEntries []TokenizedLog
 	for level := 0; level <= maxLevel; level++ {
 		fmt.Printf("level %d\n", level)
 		// generate clusters.
-		err = lm.ClusterGeneration(tokenizedLogEntries, level)
+		err := lm.ClusterGeneration(tokenizedLogEntries, level)
 		if err != nil {
 			return err
 		}
