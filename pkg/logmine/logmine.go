@@ -8,6 +8,8 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"sync"
+	"time"
 )
 
 type TokenizedLogEntry struct {
@@ -91,10 +93,10 @@ func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
 		return err
 	}
 
-  err = lm.processTokenizedLogEntries(tokenizedLogEntries, maxLevel)
-  return err
+	fmt.Printf("tokenize: %s  :Read file and initial tokenization\n", time.Now())
+	err = lm.processTokenizedLogEntries(tokenizedLogEntries, maxLevel)
+	return err
 }
-
 
 func (lm *LogMine) processTokenizedLogEntries(tokenizedLogEntries []TokenizedLogEntry, maxLevel int) error {
 
@@ -149,23 +151,45 @@ func willProcessLine(l string) bool {
 func (lm *LogMine) PreprocessFromReader(reader io.Reader) ([]TokenizedLogEntry, error) {
 
 	tokenizedLogEntries := []TokenizedLogEntry{}
+	outCh := make(chan TokenizedLogEntry, 100000)
+	inCh := make(chan string, 100000)
+	go func() {
+		for te := range outCh {
+			tokenizedLogEntries = append(tokenizedLogEntries, te)
+		}
+	}()
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go lm.doTokenization(inCh, outCh, &wg)
+	}
 
 	// read each log entry and preprocess them.
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		l := scanner.Text()
 		if willProcessLine(l) {
-			tokens, err := lm.tokenizer.Tokenize(l)
-			if err != nil {
-				log.Errorf("Error PreProcess %s\n", err.Error())
-				return nil, err
-			}
-			te := TokenizedLogEntry{Tokens: tokens}
-			tokenizedLogEntries = append(tokenizedLogEntries, te)
+			inCh <- l
 		}
 	}
-
+	close(inCh)
+	wg.Wait()
+	close(outCh)
 	return tokenizedLogEntries, nil
+}
+
+func (lm *LogMine) doTokenization(inCh chan string, outCh chan TokenizedLogEntry, wg *sync.WaitGroup) {
+	for l := range inCh {
+		tokens, err := lm.tokenizer.Tokenize(l)
+		if err != nil {
+			log.Errorf("Error PreProcess %s\n", err.Error())
+			continue
+		}
+		te := TokenizedLogEntry{Tokens: tokens}
+		outCh <- te
+	}
+	wg.Done()
 }
 
 // PreprocessFromSlice will read in ALL log entries from a file(reader)
@@ -176,7 +200,7 @@ func (lm *LogMine) PreprocessFromSlice(logEntries []string) ([]TokenizedLogEntry
 	tokenizedLogEntries := []TokenizedLogEntry{}
 
 	// read each log entry and preprocess them.
-	for _,l := range logEntries {
+	for _, l := range logEntries {
 		if willProcessLine(l) {
 			tokens, err := lm.tokenizer.Tokenize(l)
 			if err != nil {
@@ -190,8 +214,6 @@ func (lm *LogMine) PreprocessFromSlice(logEntries []string) ([]TokenizedLogEntry
 
 	return tokenizedLogEntries, nil
 }
-
-
 
 func (lm *LogMine) ClusterGeneration(logs []TokenizedLogEntry, level int) error {
 
@@ -230,7 +252,7 @@ func (lm *LogMine) DisplayFinalOutput(simplify bool) error {
 		return err
 	}
 
-	for _,t := range tokens {
+	for _, t := range tokens {
 		fmt.Printf("count %d : pattern %s\n", t.NumberOfPreviousEntries, t.ToString())
 	}
 	return nil
@@ -245,11 +267,10 @@ func (lm *LogMine) GenerateFinalOutput(simplify bool) ([]TokenizedLogEntry, erro
 		return clusters[i].PatternForCluster.NumberOfPreviousEntries < clusters[j].PatternForCluster.NumberOfPreviousEntries
 	})
 
-	tokens,_ := lm.clusterProcessor.CreateSimplifedPatternForClusterLevel(lastLevel)
+	tokens, _ := lm.clusterProcessor.CreateSimplifedPatternForClusterLevel(lastLevel)
 	sort.Slice(tokens, func(i int, j int) bool {
 		return tokens[i].NumberOfPreviousEntries < tokens[j].NumberOfPreviousEntries
 	})
 
 	return tokens, nil
 }
-

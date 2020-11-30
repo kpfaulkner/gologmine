@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/kpfaulkner/gologmine/pkg/logmine"
 	log "github.com/sirupsen/logrus"
@@ -29,6 +30,8 @@ func generateMaxDistances(maxDist string) ([]float64, error) {
 func main() {
 	fmt.Printf("so it begins...\n")
 
+	start := time.Now()
+	fmt.Printf("start %s\n", start)
 	maxDist := flag.String("maxdist", "0.01,0.1,0.3,0.9", "Max distances for clustering. Comma separated decimals. eg 0.01,0.05 etc")
 	maxLevel := flag.Int("maxlevel", 3, "Max level 0-3")
 	file := flag.String("file", "test.log", "Log file to process")
@@ -49,6 +52,9 @@ func main() {
 
 	lm.DisplayFinalOutput(*simplify)
 
+  end := time.Now()
+	fmt.Printf("end %s\n", end)
+  fmt.Printf("took %dms\n", end.Sub(start).Milliseconds())
 
 
 }
