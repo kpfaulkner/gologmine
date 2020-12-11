@@ -85,6 +85,117 @@ func (lm *LogMine) ProcessLogsFromSlice(logEntries []string, maxLevel int) error
 	return err
 }
 
+// processLogsFromChannel batch process from channel.
+// Read as many entries (up to a limit or timeout) from the channel
+// and then send them for processing.
+// Don't want to process single tle at a time.
+func (lm *LogMine) processLogsFromChannelORIG(outCh chan TokenizedLogEntry, maxLevel int) error {
+
+	done := false
+	batchDone := false
+
+	// while counter > 0 keep processing. if gets to 0... no content for a while... bail
+	counter := 5
+
+	for !done && counter > 0 {
+
+		tokens := []TokenizedLogEntry{}
+
+		for !batchDone {
+			select {
+			case te := <-outCh:
+				counter = 5
+				tokens = append(tokens, te)
+				if len(tokens) > 100 {
+					batchDone = true
+				}
+			case <-time.After(5 * time.Second):
+				batchDone = true
+				counter--
+			}
+		}
+
+		if len(tokens) > 0 {
+			err := lm.processTokenizedLogEntries(tokens, maxLevel)
+			if err != nil {
+				log.Errorf("Unable to process log batch : %s", err.Error())
+			}
+		}
+		batchDone = false
+	}
+
+	return nil
+}
+
+// processLogsFromChannel batch process from channel.
+// Read as many entries (up to a limit or timeout) from the channel
+// and then send them for processing.
+// Don't want to process single tle at a time.
+func (lm *LogMine) processLogsFromChannel(outCh chan TokenizedLogEntry, maxLevel int) error {
+
+	tokens := []TokenizedLogEntry{}
+	totalTokensObserved := 0
+
+	for te := range outCh {
+		tokens = append(tokens, te)
+		totalTokensObserved++
+		if len(tokens) > 1000 {
+			err := lm.generateAllClusterLevels(tokens, maxLevel)
+			if err != nil {
+				log.Errorf("Unable to process log batch : %s", err.Error())
+			}
+			tokens = []TokenizedLogEntry{}
+			//fmt.Printf("number of tokens %d\n", totalTokensObserved)
+		}
+	}
+
+	// catch anything thats been put in the slice but hasn't been processed yet.
+	if len(tokens) > 1000 {
+		err := lm.generateAllClusterLevels(tokens, maxLevel)
+		if err != nil {
+			log.Errorf("Unable to process log batch : %s", err.Error())
+		}
+	}
+
+	// now
+	return nil
+}
+
+// ProcessLogsAsRead reads the log entries from the file, sends to
+// another function for tokenization and gets the results back as soon as possible
+// ie it does not have to wait for entire file to be processed.
+// It then passes the tokenized version to the LogMine routines.
+func (lm *LogMine) ProcessLogsAsRead(reader io.Reader, maxLevel int) error {
+
+	outCh := make(chan TokenizedLogEntry, 100000)
+	inCh := make(chan string, 100000)
+
+	// should we spawn more of these?
+	// Currently this is definitely NOT the bottleneck.
+	go lm.processLogsFromChannel(outCh, maxLevel)
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go lm.doTokenization(inCh, outCh, &wg)
+	}
+
+	// read each log entry and preprocess them.
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		l := scanner.Text()
+		if willProcessLine(l) {
+			inCh <- l
+		}
+	}
+	close(inCh)
+	wg.Wait()
+	close(outCh)
+
+
+	return nil
+}
+
 func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
 
 	// preprocess + datatype identification
@@ -98,8 +209,26 @@ func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
 	return err
 }
 
+func (lm *LogMine) generateAllClusterLevels(tokenizedLogEntries []TokenizedLogEntry, maxLevel int) error {
+
+	start1 := time.Now()
+	// loop through all the levels.
+	for level := 0; level <= maxLevel; level++ {
+		fmt.Printf("level %d\n", level)
+		// generate clusters.
+		err := lm.ClusterGeneration(tokenizedLogEntries, level)
+		if err != nil {
+			return err
+		}
+	}
+	end1 := time.Now()
+	fmt.Printf("generateAllClusterLevels took %d ms\n", end1.Sub(start1).Milliseconds())
+	return nil
+}
+
 func (lm *LogMine) processTokenizedLogEntries(tokenizedLogEntries []TokenizedLogEntry, maxLevel int) error {
 
+	start1 := time.Now()
 	// loop through all the levels.
 	for level := 0; level <= maxLevel; level++ {
 		fmt.Printf("level %d\n", level)
@@ -111,6 +240,7 @@ func (lm *LogMine) processTokenizedLogEntries(tokenizedLogEntries []TokenizedLog
 
 		newTokenizedLogEntries := []TokenizedLogEntry{}
 
+		start := time.Now()
 		// now process/merge each cluster in the cluster "level"
 		for index, cluster := range lm.clusterProcessor.clusters[level] {
 			tokenizedLogEntry, err := lm.clusterProcessor.ProcessSingleCluster(cluster)
@@ -129,8 +259,12 @@ func (lm *LogMine) processTokenizedLogEntries(tokenizedLogEntries []TokenizedLog
 			newTokenizedLogEntries = append(newTokenizedLogEntries, *tokenizedLogEntry)
 		}
 		tokenizedLogEntries = newTokenizedLogEntries
+		end := time.Now()
+		fmt.Printf("processing cluster level took %d ms\n", end.Sub(start).Milliseconds())
 	}
 
+	end1 := time.Now()
+	fmt.Printf("processTokenizedLogEntries took %d ms\n", end1.Sub(start1).Milliseconds())
 	return nil
 }
 

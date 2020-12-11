@@ -43,7 +43,8 @@ func main() {
 	lm := logmine.NewLogMine(distances)
 	f, _ := os.Open(*file)
 
-	err = lm.ProcessLogsFromReader(f, *maxLevel)
+	//err = lm.ProcessLogsFromReader(f, *maxLevel)
+	err = lm.ProcessLogsAsRead(f, *maxLevel)
 	if err != nil {
 		log.Fatalf("error while processing. %s\n", err.Error())
 	}
@@ -52,9 +53,8 @@ func main() {
 
 	lm.DisplayFinalOutput(*simplify)
 
-  end := time.Now()
+	end := time.Now()
 	fmt.Printf("end %s\n", end)
-  fmt.Printf("took %dms\n", end.Sub(start).Milliseconds())
-
+	fmt.Printf("took %dms\n", end.Sub(start).Milliseconds())
 
 }
