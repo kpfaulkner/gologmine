@@ -7,10 +7,10 @@ import (
 const (
 
 	// dd/mm/yyyy
-	DATE1REGEX string = "(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[012])/((19|20)\\d\\d)"
+	DATE5REGEX string = "(0?[1-9]|[12][0-9]|3[01])/(0?[1-9]|1[012])/((19|20)\\d\\d)"
 
 	// mm/dd/yyyy
-	DATE2REGEX string = "(0?[1-9]|1[012])/(0?[1-9]|[12][0-9]|3[01])/((19|20)\\d\\d)"
+	DATE6REGEX string = "(0?[1-9]|1[012])/(0?[1-9]|[12][0-9]|3[01])/((19|20)\\d\\d)"
 
 	// dd-mm-yyyy
 	DATE3REGEX string = "(0?[1-9]|[12][0-9]|3[01])-(0?[1-9]|1[012])-((19|20)\\d\\d)"
@@ -19,10 +19,10 @@ const (
 	DATE4REGEX string = "(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])-((19|20)\\d\\d)"
 
 	// yyyy-mm-dd
-	DATE5REGEX string = "((19|20)\\d\\d)-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])"
+	DATE1REGEX string = "((19|20)\\d\\d)-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])"
 
 	// yyyy/mm/dd
-	DATE6REGEX string = "((19|20)\\d\\d)/(0?[1-9]|1[012])/(0?[1-9]|[12][0-9]|3[01])"
+	DATE2REGEX string = "((19|20)\\d\\d)/(0?[1-9]|1[012])/(0?[1-9]|[12][0-9]|3[01])"
 )
 
 const (
@@ -50,6 +50,7 @@ func NewDateTokenizer() DateTokenizer {
 	dt.date6RE, _ = regexp.Compile(DATE6REGEX)
 
 	dt.dateRESlice = []*regexp.Regexp{dt.date1RE, dt.date2RE, dt.date3RE, dt.date4RE, dt.date5RE, dt.date6RE}
+
 	return dt
 }
 

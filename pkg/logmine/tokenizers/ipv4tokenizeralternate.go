@@ -14,6 +14,8 @@ func NewIPV4TokenizerAlternate() IPV4TokenizerAlternate {
 	return it
 }
 
+// CheckToken taken from https://medium.com/@sergio.anguita/detecting-a-valid-ipv4-in-go-like-a-boss-32eda9bf422f
+// SOOOO much better than regex :)
 func (it IPV4TokenizerAlternate) CheckToken(token string) bool {
 	big := math.MaxUint32
 

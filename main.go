@@ -54,8 +54,6 @@ func main() {
 		log.Fatalf("error while processing. %s\n", err.Error())
 	}
 
-	//lm.DisplayFinalOutput(false)
-
 	lm.DisplayFinalOutput(*simplify)
 
 	end := time.Now()
