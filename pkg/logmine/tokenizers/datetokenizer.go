@@ -50,7 +50,6 @@ func NewDateTokenizer() DateTokenizer {
 	dt.date6RE, _ = regexp.Compile(DATE6REGEX)
 
 	dt.dateRESlice = []*regexp.Regexp{dt.date1RE, dt.date2RE, dt.date3RE, dt.date4RE, dt.date5RE, dt.date6RE}
-
 	return dt
 }
 

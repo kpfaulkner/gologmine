@@ -24,7 +24,7 @@ func NewTokenizer() Tokenizer {
 
 	// list all the specifictokenizers that we're going to use.
 	t.tokenizerCheckers = []tokenizers.TokenizerChecker{tokenizers.NewDateTokenizer(), tokenizers.NewTimeTokenizer(),
-		tokenizers.NewIPV4Tokenizer(), tokenizers.NewNumberTokenizer(),
+		tokenizers.NewIPV4TokenizerAlternate(), tokenizers.NewNumberTokenizer(),
 		tokenizers.NewWordTokenizer(), tokenizers.NewNotSpaceTokenizer()}
 
 	//																					 tokenizers.NewAnyDataTokenizer()}

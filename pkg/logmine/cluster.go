@@ -6,8 +6,8 @@ import (
 )
 
 type Cluster struct {
-	score         float64 // floats ok for this?
-	logsInCluster []TokenizedLogEntry
+	score             float64 // floats ok for this?
+	logsInCluster     []TokenizedLogEntry
 	PatternForCluster TokenizedLogEntry
 }
 
@@ -50,7 +50,7 @@ func NewClusterProcessor(distances []float64) ClusterProcessor {
 }
 
 func (cp *ClusterProcessor) ClearXX() {
-  //cp.clusters = []Cluster{}
+	//cp.clusters = []Cluster{}
 }
 
 func score(e1 tokenizers.DataType, e2 tokenizers.DataType, level int) float64 {
@@ -63,13 +63,13 @@ func score(e1 tokenizers.DataType, e2 tokenizers.DataType, level int) float64 {
 	}
 
 	// if a generic data type, return 1.
-  newToken := ConvertTokenDataType(e1, e2)
-  if newToken != "" {
-  	return 1
-  }
+	newToken := ConvertTokenDataType(e1, e2)
+	if newToken != "" {
+		return 1
+	}
 
-  // otherwise do normal test.
-  // This is just testing out an idea.
+	// otherwise do normal test.
+	// This is just testing out an idea.
 	if e1 == e2 {
 		return 1
 	}
@@ -97,12 +97,12 @@ func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry, level int) error {
 
 	addedToCluster := false
 	indexOfClosestCluster := -1
-  closestDistance := 100.0
+	closestDistance := 100.0
 
-  // add empty cluster list if required
-  if len(cp.clusters) < level +1 {
-  	cp.clusters = append(cp.clusters, []Cluster{})
-  }
+	// add empty cluster list if required
+	if len(cp.clusters) < level+1 {
+		cp.clusters = append(cp.clusters, []Cluster{})
+	}
 
 	// calculate which cluster it can go into.
 	for index, cluster := range cp.clusters[level] {
@@ -130,7 +130,7 @@ func (cp *ClusterProcessor) AddLogEntry(l TokenizedLogEntry, level int) error {
 	return nil
 }
 
-func ConvertTokenDataType( token1 tokenizers.DataType, token2 tokenizers.DataType) tokenizers.DataType {
+func ConvertTokenDataType(token1 tokenizers.DataType, token2 tokenizers.DataType) tokenizers.DataType {
 
 	tokenToUse := tokenizers.DataType("")
 
@@ -142,47 +142,47 @@ func ConvertTokenDataType( token1 tokenizers.DataType, token2 tokenizers.DataTyp
 		tokenToUse = tokenizers.NOTSPACE
 	}
 
-	if token1 == tokenizers.WORD && token2 == tokenizers.NUMBER{
+	if token1 == tokenizers.WORD && token2 == tokenizers.NUMBER {
 		tokenToUse = tokenizers.NOTSPACE
 	}
 
-	if token1 == tokenizers.IPV4 && token2 == tokenizers.WORD{
+	if token1 == tokenizers.IPV4 && token2 == tokenizers.WORD {
 		tokenToUse = tokenizers.NOTSPACE
 	}
 
-	if token1 == tokenizers.IPV4 && token2 == tokenizers.NUMBER{
+	if token1 == tokenizers.IPV4 && token2 == tokenizers.NUMBER {
 		tokenToUse = tokenizers.NOTSPACE
 	}
 
-	if token1 == tokenizers.IPV4 && token2 == tokenizers.NUMBER{
+	if token1 == tokenizers.IPV4 && token2 == tokenizers.NUMBER {
 		tokenToUse = tokenizers.NOTSPACE
 	}
 
-	if token1 == tokenizers.IPV4 && token2 == tokenizers.DATE{
+	if token1 == tokenizers.IPV4 && token2 == tokenizers.DATE {
 		tokenToUse = tokenizers.NOTSPACE
 	}
 
-	if token1 == tokenizers.IPV4 && token2 == tokenizers.TIME{
+	if token1 == tokenizers.IPV4 && token2 == tokenizers.TIME {
 		tokenToUse = tokenizers.NOTSPACE
 	}
 
-	if token1 == tokenizers.ALIGNER && token2 == tokenizers.WORD{
+	if token1 == tokenizers.ALIGNER && token2 == tokenizers.WORD {
 		tokenToUse = tokenizers.ANYDATA
 	}
 
-	if token1 == tokenizers.ALIGNER && token2 == tokenizers.NUMBER{
+	if token1 == tokenizers.ALIGNER && token2 == tokenizers.NUMBER {
 		tokenToUse = tokenizers.ANYDATA
 	}
 
-	if token1 == tokenizers.ALIGNER && token2 == tokenizers.NOTSPACE{
+	if token1 == tokenizers.ALIGNER && token2 == tokenizers.NOTSPACE {
 		tokenToUse = tokenizers.ANYDATA
 	}
 
-	if token1 == tokenizers.ALIGNER && token2 == tokenizers.DATE{
+	if token1 == tokenizers.ALIGNER && token2 == tokenizers.DATE {
 		tokenToUse = tokenizers.ANYDATA
 	}
 
-	if token1 == tokenizers.ALIGNER && token2 == tokenizers.TIME{
+	if token1 == tokenizers.ALIGNER && token2 == tokenizers.TIME {
 		tokenToUse = tokenizers.ANYDATA
 	}
 
@@ -192,7 +192,7 @@ func ConvertTokenDataType( token1 tokenizers.DataType, token2 tokenizers.DataTyp
 func mergeToken(t1 tokenizers.DataType, t2 tokenizers.DataType, e1 tokenizers.DataType, e2 tokenizers.DataType, replacementToken tokenizers.DataType, existingToken tokenizers.DataType) tokenizers.DataType {
 
 	if t1 == e1 && t2 == e2 ||
-		 t1 == e2 && t2 == e1 {
+		t1 == e2 && t2 == e1 {
 		return replacementToken
 	}
 
@@ -206,12 +206,12 @@ func mergeToken(t1 tokenizers.DataType, t2 tokenizers.DataType, e1 tokenizers.Da
 
 // mergeAlignedLogs 2 log entries should have same length (aligned)
 // now go through rules to determine what the merged version looks like:
-func mergeAlignedLogs( align1 []tokenizers.DataType, align2 []tokenizers.DataType) ([]tokenizers.DataType, error) {
+func mergeAlignedLogs(align1 []tokenizers.DataType, align2 []tokenizers.DataType) ([]tokenizers.DataType, error) {
 
 	result := make([]tokenizers.DataType, len(align1))
 
 	var tokenToUse tokenizers.DataType
-	for i:=0;i<len(align1);i++ {
+	for i := 0; i < len(align1); i++ {
 		token1 := align1[i]
 		token2 := align2[i]
 
@@ -236,7 +236,6 @@ func mergeAlignedLogs( align1 []tokenizers.DataType, align2 []tokenizers.DataTyp
 		tokenToUse = mergeToken(token1, token2, tokenizers.ALIGNER, tokenizers.TIME, tokenizers.ANYDATA, tokenToUse)
 		tokenToUse = mergeToken(token1, token2, tokenizers.ALIGNER, tokenizers.ANYDATA, tokenizers.ANYDATA, tokenToUse)
 
-
 		result[i] = tokenToUse
 
 	}
@@ -246,11 +245,11 @@ func mergeAlignedLogs( align1 []tokenizers.DataType, align2 []tokenizers.DataTyp
 
 // Process a cluster (collection of TokenizedLogEntry) and generate a generic
 // TokenizedLogEntry that will represent the entire cluster.
-func (cp *ClusterProcessor) ProcessSingleCluster( cluster Cluster) (*TokenizedLogEntry, error) {
+func (cp *ClusterProcessor) ProcessSingleCluster(cluster Cluster) (*TokenizedLogEntry, error) {
 
 	existingEntry := cluster.logsInCluster[0].Tokens
 	numPreviousLogs := cluster.logsInCluster[0].NumberOfPreviousEntries
-	for _,entry := range cluster.logsInCluster[1:] {
+	for _, entry := range cluster.logsInCluster[1:] {
 
 		// align the 2 logs.
 		align1, align2, err := SmithWaterman(existingEntry, entry.Tokens)
@@ -259,7 +258,7 @@ func (cp *ClusterProcessor) ProcessSingleCluster( cluster Cluster) (*TokenizedLo
 		}
 
 		// merge the alignments
-		mergedResult, err := mergeAlignedLogs( align1, align2)
+		mergedResult, err := mergeAlignedLogs(align1, align2)
 		if err != nil {
 			return nil, err
 		}
@@ -270,25 +269,25 @@ func (cp *ClusterProcessor) ProcessSingleCluster( cluster Cluster) (*TokenizedLo
 		numPreviousLogs += entry.NumberOfPreviousEntries
 	}
 
-  tle := TokenizedLogEntry{}
-  tle.Tokens = existingEntry
-  tle.NumberOfPreviousEntries = numPreviousLogs
-  return &tle,nil
+	tle := TokenizedLogEntry{}
+	tle.Tokens = existingEntry
+	tle.NumberOfPreviousEntries = numPreviousLogs
+	return &tle, nil
 }
 
 // SimplifyClusterLevel consolidates contiguous *,WORD or NOSPACE together
 // This is purely for display purposes and would mean any further processing would be null (nil)
 // and void :P
-func (cp *ClusterProcessor) CreateSimplifedPatternForClusterLevel(level int) ([]TokenizedLogEntry,error) {
+func (cp *ClusterProcessor) CreateSimplifedPatternForClusterLevel(level int) ([]TokenizedLogEntry, error) {
 
 	existingClusters := cp.clusters[level]
 
 	newTokenizedLogEntrySlice := []TokenizedLogEntry{}
 	hasGenericToken := false
-	for _, t := range existingClusters{
+	for _, t := range existingClusters {
 		pattern := t.PatternForCluster
 		newTokenSlice := []tokenizers.DataType{}
-		for _,t := range pattern.Tokens {
+		for _, t := range pattern.Tokens {
 			if t == tokenizers.NOTSPACE || t == tokenizers.WORD || t == tokenizers.ANYDATA {
 				if !hasGenericToken {
 					newTokenSlice = append(newTokenSlice, tokenizers.ANYDATA)
@@ -310,16 +309,15 @@ func (cp *ClusterProcessor) CreateSimplifedPatternForClusterLevel(level int) ([]
 	/// remove dupes (but increase NumberOfPreviousEntries...
 	newTokenizedLogEntrySlice = mergeSimplifiedTokens(newTokenizedLogEntrySlice)
 
-  return newTokenizedLogEntrySlice, nil
+	return newTokenizedLogEntrySlice, nil
 }
-
 
 func mergeSimplifiedTokens(logEntries []TokenizedLogEntry) []TokenizedLogEntry {
 
 	filteredSlice := []TokenizedLogEntry{}
-  tokenLUT := make(map[string]TokenizedLogEntry)
+	tokenLUT := make(map[string]TokenizedLogEntry)
 
-	for _,le := range logEntries {
+	for _, le := range logEntries {
 		entry, ok := tokenLUT[le.ToString()]
 		if ok {
 			entry.NumberOfPreviousEntries += le.NumberOfPreviousEntries
@@ -329,7 +327,7 @@ func mergeSimplifiedTokens(logEntries []TokenizedLogEntry) []TokenizedLogEntry {
 		tokenLUT[le.ToString()] = entry
 	}
 
-	for _,v := range tokenLUT {
+	for _, v := range tokenLUT {
 		filteredSlice = append(filteredSlice, v)
 	}
 

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/kpfaulkner/gologmine/pkg/logmine"
 	log "github.com/sirupsen/logrus"
+	_ "net/http/pprof"
 )
 
 func generateMaxDistances(maxDist string) ([]float64, error) {
@@ -29,6 +31,10 @@ func generateMaxDistances(maxDist string) ([]float64, error) {
 
 func main() {
 	fmt.Printf("so it begins...\n")
+
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	start := time.Now()
 	fmt.Printf("start %s\n", start)
@@ -52,9 +58,8 @@ func main() {
 
 	lm.DisplayFinalOutput(*simplify)
 
-  end := time.Now()
+	end := time.Now()
 	fmt.Printf("end %s\n", end)
-  fmt.Printf("took %dms\n", end.Sub(start).Milliseconds())
-
+	fmt.Printf("took %dms\n", end.Sub(start).Milliseconds())
 
 }

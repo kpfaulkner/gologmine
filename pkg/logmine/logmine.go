@@ -85,16 +85,27 @@ func (lm *LogMine) ProcessLogsFromSlice(logEntries []string, maxLevel int) error
 	return err
 }
 
+// Read log entries from reader and dump into readChannel.s
+func (lm *LogMine) ReadLogsIntoChannel(reader io.Reader, readChannel chan string) {
+
+}
+
 func (lm *LogMine) ProcessLogsFromReader(reader io.Reader, maxLevel int) error {
 
+	start := time.Now()
 	// preprocess + datatype identification
 	tokenizedLogEntries, err := lm.PreprocessFromReader(reader)
 	if err != nil {
 		return err
 	}
+	step1 := time.Now()
+	fmt.Printf("preprocessing took %d ms\n", step1.Sub(start).Milliseconds())
 
 	fmt.Printf("tokenize: %s  :Read file and initial tokenization\n", time.Now())
 	err = lm.processTokenizedLogEntries(tokenizedLogEntries, maxLevel)
+	step2 := time.Now()
+	fmt.Printf("processing took %d ms\n", step2.Sub(step1).Milliseconds())
+
 	return err
 }
 
@@ -252,8 +263,8 @@ func (lm *LogMine) DisplayFinalOutput(simplify bool) error {
 		return err
 	}
 
-	for _, t := range tokens {
-		fmt.Printf("count %d : pattern %s\n", t.NumberOfPreviousEntries, t.ToString())
+	for _, _ = range tokens {
+		//fmt.Printf("count %d : pattern %s\n", t.NumberOfPreviousEntries, t.ToString())
 	}
 	return nil
 }
