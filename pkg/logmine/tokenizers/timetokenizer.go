@@ -25,7 +25,11 @@ func NewTimeTokenizer() TimeTokenizer {
 
 // CheckDate checks a number of different date formats and indicates if a match is found.
 func (tt TimeTokenizer) CheckToken(token string) bool {
-	return tt.timeRE.MatchString(token)
+	if len(token) >= 7 && len(token) <= 8 {
+		return tt.timeRE.MatchString(token)
+	}
+
+	return false
 }
 
 func (tt TimeTokenizer) GetDataType() DataType {

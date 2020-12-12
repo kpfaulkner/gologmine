@@ -29,27 +29,34 @@ const (
 	DATE DataType = "DATE"
 )
 
-type DateTokenizer struct {
-	date1RE *regexp.Regexp
-	date2RE *regexp.Regexp
-	date3RE *regexp.Regexp
-	date4RE *regexp.Regexp
-	date5RE *regexp.Regexp
-	date6RE *regexp.Regexp
+type RegexValidator struct {
+	Re *regexp.Regexp
+	Min int
+	Max int
+}
 
-	dateRESlice []*regexp.Regexp
+func NewRegexValidator( s string, min int, max int) RegexValidator {
+	rev := RegexValidator{}
+	rev.Re,_ = regexp.Compile(s)
+	rev.Min = min
+	rev.Max = max
+	return rev
+}
+
+type DateTokenizer struct {
+	dateRESlice []RegexValidator
 }
 
 func NewDateTokenizer() DateTokenizer {
 	dt := DateTokenizer{}
-	dt.date1RE, _ = regexp.Compile(DATE1REGEX)
-	dt.date2RE, _ = regexp.Compile(DATE2REGEX)
-	dt.date3RE, _ = regexp.Compile(DATE3REGEX)
-	dt.date4RE, _ = regexp.Compile(DATE4REGEX)
-	dt.date5RE, _ = regexp.Compile(DATE5REGEX)
-	dt.date6RE, _ = regexp.Compile(DATE6REGEX)
-
-	dt.dateRESlice = []*regexp.Regexp{dt.date1RE, dt.date2RE, dt.date3RE, dt.date4RE, dt.date5RE, dt.date6RE}
+	dt.dateRESlice = []RegexValidator{
+		NewRegexValidator(DATE1REGEX,8,10),
+		NewRegexValidator(DATE2REGEX,8,10),
+		NewRegexValidator(DATE3REGEX,8,10),
+		NewRegexValidator(DATE4REGEX,8,10),
+		NewRegexValidator(DATE5REGEX,8,10),
+		NewRegexValidator(DATE6REGEX,8,10),
+	}
 
 	return dt
 }
@@ -57,8 +64,11 @@ func NewDateTokenizer() DateTokenizer {
 // CheckDate checks a number of different date formats and indicates if a match is found.
 func (dt DateTokenizer) CheckToken(token string) bool {
 	for _, re := range dt.dateRESlice {
-		if re.MatchString(token) {
-			return true
+		// check length is valid at least.
+		if len(token) >= re.Min && len(token) <= re.Max {
+			if re.Re.MatchString(token) {
+				return true
+			}
 		}
 	}
 	return false
